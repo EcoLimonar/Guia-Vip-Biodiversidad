@@ -13,7 +13,16 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         :root { --primary: #3f6212; }
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #fafaf9; overflow-x: hidden; margin: 0; padding: 0; }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            background-color: #fafaf9; 
+            overflow-x: hidden; 
+            margin: 0; 
+            padding: 0;
+            width: 100%;
+        }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .animal-card { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         .animal-card:active { transform: scale(0.96); }
@@ -147,7 +156,7 @@
                 { id: 47, commonName: "Yacabó", scientificName: "Herpetotheres cachinnans", category: "Aves", habitat: "Dosel", info: "Controlador de serpientes. Ayuda a mantener en equilibrio la población de reptiles del hotel de manera natural.", color: "bg-orange-800", image: "169k3IyBM15ILaSJBchoyt5w_kqnGo9B4" },
                 { id: 48, commonName: "Paloma de Ojos Azules", scientificName: "Columbina sp.", category: "Aves", habitat: "Jardín", info: "Paz en los senderos. Consume semillas de plantas invasoras, ayudando a que el césped se mantenga nativo y sano.", color: "bg-stone-300", image: "1Roh_RatBR4krUbPB3eFNwI_10Ctw_PDw" },
                 { id: 49, commonName: "Cucarachero Currucuchú", scientificName: "Campylorhynchus griseus", category: "Aves", habitat: "Matorrales", info: "Maestros del canto grupal. Su labor social ayuda a descubrir fuentes de alimento para muchas otras especies.", color: "bg-stone-600", image: "1j-2E0HJmyCNA-Iv9k1_1G6Bu2A3UMOJ6" },
-                { id: 50, commonName: "Ibis", scientificName: "Phimosus infuscatus", category: "Aves", habitat: "Lodo", info: "Oxigenador de pantanos. Al buscar comida en el barro, airea el sustrato permitiendo que las raíces de plantas acuáticas respiren.", color: "bg-stone-800", image: "1XFMJG1kolA7AW2pLc-aMRVXYnd09AQxu" },
+                { id: 50, commonName: "Ibis", scientificName: "Phimosus icterocephalus", category: "Aves", habitat: "Lodo", info: "Oxigenador de pantanos. Al buscar comida en el barro, airea el sustrato permitiendo que las raíces de plantas acuáticas respiren.", color: "bg-stone-800", image: "1XFMJG1kolA7AW2pLc-aMRVXYnd09AQxu" },
                 { id: 51, commonName: "Sirirí Tijeretón", scientificName: "Tyrannus savana", category: "Aves", habitat: "Cielo", info: "Elegancia migratoria. Su presencia nos recuerda que El Limonar es un refugio continental para aves viajeras.", color: "bg-stone-500", image: "1Y7nRa-y3KjAbvAMuvW8Fl6I1r9m-S4nW" },
                 { id: 52, commonName: "Tangara Azul Gris", scientificName: "Thraupis episcopus", category: "Aves", habitat: "Frutales", info: "Vibrante azulejo. Polinizador clave de árboles de mango y papaya que alimentan a toda nuestra fauna silvestre.", color: "bg-blue-400", image: "1C0diwAkyO1cq7MZ5BRYvlmKvCAHB5Gq_" },
                 { id: 53, commonName: "Periquito de Anteojos", scientificName: "Forpus conspicillatus", category: "Aves", habitat: "Jardines", info: "Pequeño gran sembrador. Ayuda a que las áreas verdes del hotel se mantengan llenas de arbustos florales con su alimentación.", color: "bg-blue-300", image: "1Qt1tcdWpyo0lVV8BJbgH2TXwIPYW_zuz" },
@@ -246,14 +255,15 @@
 
             return (
                 <div className="min-h-screen flex flex-col bg-stone-50 overflow-x-hidden">
-                    {/* Header Premium - Optimizado para móvil */}
-                    <header className="relative min-h-[160px] md:min-h-[240px] bg-lime-800 flex flex-col items-center justify-center text-white overflow-hidden px-4 py-6">
+                    {/* Header Premium - Optimizado para evitar cortes en móvil */}
+                    <header className="relative min-h-[160px] md:min-h-[240px] bg-lime-800 flex flex-col items-center justify-center text-white overflow-hidden px-4 py-8">
                         <div className="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?auto=format&fit=crop&q=80')] bg-cover bg-center"></div>
                         <div className="absolute inset-0 bg-gradient-to-b from-lime-900/60 to-lime-800"></div>
-                        <div className="relative z-10 flex flex-col items-center w-full max-w-xs md:max-w-none">
-                            <ImageWithFallback src={logoUrl} alt="Logo" className="h-12 md:h-16 w-auto object-contain mb-3" />
-                            <h1 className="text-lg md:text-2xl font-black uppercase tracking-tighter text-center leading-tight text-lime-50">GUÍA DE BIODIVERSIDAD</h1>
-                            <p className="text-lime-200 text-[8px] md:text-[9px] uppercase font-bold tracking-[0.3em] mt-2 text-center">Inventario Completo: 105 Habitantes</p>
+                        <div className="relative z-10 flex flex-col items-center w-full">
+                            {/* Logo con ancho flexible para pantallas de 320px */}
+                            <img src={logoUrl} alt="Logo" className="h-14 md:h-20 w-auto max-w-[80%] object-contain mb-4" />
+                            <h1 className="text-xl md:text-3xl font-black uppercase tracking-tighter text-center leading-tight text-lime-50 px-2">GUÍA DE BIODIVERSIDAD</h1>
+                            <p className="text-lime-200 text-[9px] md:text-[11px] uppercase font-bold tracking-[0.3em] mt-3 text-center">Catálogo de 105 Especies</p>
                         </div>
                     </header>
 
@@ -288,32 +298,32 @@
 
                     <div className="view-enter flex-1 flex flex-col">
                         {view === 'explore' ? (
-                            <div className="max-w-7xl mx-auto w-full px-4 mt-6">
-                                <main className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-2 mb-20">
+                            <div className="max-w-7xl mx-auto w-full px-2 md:px-4 mt-6">
+                                <main className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 mt-2 mb-20">
                                     {filteredAnimals.map(animal => (
                                         <div key={animal.id} className="animal-card bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-stone-100 group">
                                             <div className="aspect-square relative overflow-hidden bg-stone-100">
                                                 <ImageWithFallback src={getImg(animal.image)} alt={animal.commonName} category={animal.category} className="w-full h-full group-hover:scale-110 transition-transform duration-700" />
-                                                <button onClick={() => setIsReporting(animal)} className="absolute top-2 right-2 bg-lime-800 text-white p-2.5 rounded-full shadow-lg active:scale-125 transition-transform z-10 backdrop-blur-sm">
+                                                <button onClick={() => setIsReporting(animal)} className="absolute top-2 right-2 bg-lime-800 text-white p-2 md:p-2.5 rounded-full shadow-lg active:scale-125 transition-transform z-10 backdrop-blur-sm">
                                                     <Icon name="camera" className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
-                                            <div className="p-4 flex-1 flex flex-col justify-between">
+                                            <div className="p-3 md:p-4 flex-1 flex flex-col justify-between">
                                                 <div>
                                                     <span className="text-[7px] font-black uppercase text-lime-800/60 tracking-widest">{animal.category}</span>
                                                     <h3 className="text-[10px] font-black text-stone-800 truncate leading-tight uppercase tracking-tighter mb-1 mt-0.5">{animal.commonName}</h3>
                                                 </div>
-                                                <button onClick={() => setSelectedAnimal(animal)} className="w-full mt-3 py-2 text-[8px] font-black uppercase tracking-widest bg-stone-50 text-stone-500 rounded-lg border border-stone-100 hover:bg-lime-800 hover:text-white transition-all">Ver Relato</button>
+                                                <button onClick={() => setSelectedAnimal(animal)} className="w-full mt-2 md:mt-3 py-1.5 md:py-2 text-[8px] font-black uppercase tracking-widest bg-stone-50 text-stone-500 rounded-lg border border-stone-100 hover:bg-lime-800 hover:text-white transition-all">Ver Relato</button>
                                             </div>
                                         </div>
                                     ))}
                                 </main>
                             </div>
                         ) : (
-                            <div className="flex-1 flex flex-col p-4 max-w-7xl mx-auto w-full">
-                                {/* Altura optimizada para móvil */}
-                                <div className="bg-white p-1 rounded-2xl shadow-xl border border-stone-200 flex-1 overflow-hidden h-[calc(100vh-280px)] md:h-[600px]">
-                                    <iframe src={mapUrl} className="w-full h-full border-none rounded-xl" title="Mapa" loading="lazy" />
+                            <div className="flex-1 flex flex-col p-2 md:p-4 max-w-7xl mx-auto w-full">
+                                {/* Altura estable con min-height para evitar cortes por barras de navegación móviles */}
+                                <div className="bg-white p-1 rounded-2xl shadow-xl border border-stone-200 overflow-hidden flex flex-col" style={{ minHeight: '500px', height: '75vh' }}>
+                                    <iframe src={mapUrl} className="flex-1 w-full border-none rounded-xl" title="Mapa" loading="lazy" />
                                 </div>
                             </div>
                         )}
@@ -322,7 +332,7 @@
                     {/* Modales */}
                     {isReporting && (
                         <div className="fixed inset-0 z-[110] flex items-end md:items-center justify-center bg-black/70 backdrop-blur-sm px-4" onClick={() => setIsReporting(null)}>
-                            <div className="bg-white w-full max-w-md rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+                            <div className="bg-white w-full max-w-md rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
                                 <h2 className="text-xl font-black text-lime-950 uppercase tracking-tighter mb-1">Registrar Avistamiento</h2>
                                 <p className="text-[10px] font-bold uppercase text-lime-800 mb-6 tracking-widest">Colabora con el inventario de {isReporting.commonName}</p>
                                 <form onSubmit={handleSubmit} className="space-y-3">
