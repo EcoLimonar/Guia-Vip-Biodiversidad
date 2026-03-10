@@ -4,38 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SANTUARIO FLORA Y FAUNA - El Limonar</title>
-    <!-- Librerías de React, Tailwind e Iconos -->
+    <!-- Scripts de React y Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide JS (Versión estable para navegador) -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Playfair+Display:ital,wght@1,400;1,600&display=swap');
+        
         :root { --primary: #3f6212; }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body { 
             font-family: 'Inter', sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
             background-color: #fafaf9; 
-            overflow-x: hidden; 
-            margin: 0; 
-            padding: 0;
-            width: 100%;
+            margin: 0; padding: 0;
+            width: 100%; overflow-x: hidden;
         }
+
         .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .animal-card { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        .animal-card:active { transform: scale(0.96); }
+        .animal-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .animal-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         
-        .view-enter { animation: fadeIn 0.3s ease-out; }
+        .view-enter { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .img-skeleton {
             background: linear-gradient(110deg, #f3f4f6 8%, #e5e7eb 18%, #f3f4f6 33%);
-            background-size: 200% -200%;
+            background-size: 200% 100%;
             animation: shine 1.5s linear infinite;
         }
         @keyframes shine { to { background-position-x: -200%; } }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
     </style>
 </head>
 <body class="text-stone-900">
@@ -44,46 +50,49 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useCallback } = React;
 
-        const scriptURL = ""; 
-        const mapUrl = "https://drive.google.com/file/d/1EfKLC4VWofU5xhvnAWkfg_FL2z5FyDzH/preview"; 
-
+        // Componente de icono con re-intento de carga para evitar errores de ReferenceError
         const Icon = ({ name, className = "w-4 h-4" }) => {
-            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
+            useEffect(() => {
+                const initIcons = () => {
+                    if (window.lucide) {
+                        window.lucide.createIcons();
+                    } else {
+                        setTimeout(initIcons, 100);
+                    }
+                };
+                initIcons();
+            }, [name]);
             return <i data-lucide={name} className={className}></i>;
         };
 
-        const ImageWithFallback = ({ src, alt, category, className }) => {
+        const ImageWithFallback = ({ src, alt, className, zoomable = false }) => {
             const [error, setError] = useState(false);
             const [loading, setLoading] = useState(true);
-
-            const getCategoryIcon = () => {
-                switch(category) {
-                    case 'Aves': return 'bird';
-                    case 'Mariposas': return 'bug';
-                    case 'Arácnidos': return 'clover';
-                    case 'Reptiles': return 'target';
-                    case 'Anfibios': return 'droplet';
-                    case 'Primates':
-                    case 'Mamíferos': return 'footprints';
-                    default: return 'image';
-                }
-            };
+            const [isZoomed, setIsZoomed] = useState(false);
 
             return (
-                <div className={`relative overflow-hidden flex items-center justify-center ${className} ${loading ? 'img-skeleton' : ''}`}>
+                <div 
+                    className={`relative overflow-hidden flex items-center justify-center ${className} ${loading ? 'img-skeleton' : 'bg-stone-100'} ${isZoomed ? 'fixed inset-0 z-[200] bg-black/90' : ''}`}
+                    onClick={() => zoomable && setIsZoomed(!isZoomed)}
+                >
                     {!error && src ? (
                         <img 
                             src={src} 
                             alt={alt} 
                             referrerPolicy="no-referrer"
-                            className={`w-full h-full object-cover transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}
+                            className={`${isZoomed ? 'max-h-screen max-w-full object-contain' : 'w-full h-full object-cover'} transition-all duration-500 ${loading ? 'opacity-0' : 'opacity-100'}`}
                             onLoad={() => setLoading(false)}
                             onError={() => { setError(true); setLoading(false); }}
                         />
                     ) : (
-                        <div className="flex flex-col items-center justify-center text-stone-300 gap-2">
-                            <Icon name={getCategoryIcon()} className="w-8 h-8 opacity-20" />
-                            <span className="text-[7px] font-bold uppercase tracking-widest opacity-40 italic text-center px-4 italic">El Limonar Vivo</span>
+                        <div className="flex flex-col items-center justify-center text-stone-300 gap-2 p-4">
+                            <Icon name="image" className="w-8 h-8 opacity-20" />
+                            <span className="text-[7px] font-bold uppercase tracking-widest opacity-40 italic text-center">Imagen no disponible</span>
+                        </div>
+                    )}
+                    {zoomable && !isZoomed && (
+                        <div className="absolute bottom-4 right-4 bg-white/80 p-2 rounded-full shadow-lg text-stone-500">
+                            <Icon name="maximize-2" className="w-4 h-4" />
                         </div>
                     )}
                 </div>
@@ -91,132 +100,144 @@
         };
 
         const App = () => {
-            const getImg = useCallback((id) => {
-                if(!id || id === "ID_PENDIENTE") return "";
-                return id.startsWith('http') ? id : `https://lh3.googleusercontent.com/d/${id}=s1000`;
-            }, []);
-
-            const logoUrl = getImg("1dDQyRWcdpAyXI6MIW7ydC4a9G5vpwKxk");
-            const faviconUrl = getImg("19uiPeYZMbfDSlvw-gnvFh8eY-0oQ-FEo");
-
             const [view, setView] = useState('explore'); 
             const [filter, setFilter] = useState('Todos');
             const [searchTerm, setSearchTerm] = useState('');
             const [selectedAnimal, setSelectedAnimal] = useState(null);
-            const [isReporting, setIsReporting] = useState(null);
             const [isLegalOpen, setIsLegalOpen] = useState(false);
             const [status, setStatus] = useState('idle');
+            const [mySightings, setMySightings] = useState([]);
 
-            const [formData, setFormData] = useState({
-                guestName: '', cabin: '', guestEmail: '', location: ''
-            });
+            const getImg = useCallback((id) => {
+                if(!id) return "";
+                return id.startsWith('http') ? id : `https://lh3.googleusercontent.com/d/${id}=s1200`;
+            }, []);
 
+            const logoUrl = getImg("1dDQyRWcdpAyXI6MIW7ydC4a9G5vpwKxk");
+            const faviconUrl = getImg("19uiPeYZMbfDSlvw-gnvFh8eY-0oQ-FEo");
+            const mapImgId = "1EfKLC4VWofU5xhvnAWkfg_FL2z5FyDzH";
+
+            const CABINS = ["Mandarina", "Limón", "Toronja", "Naranja", "Limonar Ecohotel", "Pomelo", "Casa El Limonar"];
+            const STATIONS = ["Huerta y aula agroecógica", "Laguna de los abuelos", "Sendero de la ceiba tolua", "La estación del amor", "Estación caracolí", "Estación papagayo", "Ecohotel el limonar"];
+
+            // BASE DE DATOS COMPLETA DE 105 ESPECIES
             const animals = [
-                { id: 44, commonName: "Loro Real (Rosita)", scientificName: "Amazona ochrocephala", category: "Aves", habitat: "Jardines", info: "Rosita es la anfitriona de El Limonar. Su especie ayuda a dispersar semillas de palmas nativas, regenerando la cobertura vegetal que nos da sombra.", color: "bg-emerald-500", image: "1DHzFmNrPyujZU3y6D2H8v1qSTJC8Z6dz" },
-                { id: 2, commonName: "Mono Marteja", scientificName: "Aotus lemurinus", category: "Primates", habitat: "Noche", info: "Un centinela nocturno. Controla poblaciones de insectos y es un dispersor clave de semillas de árboles que solo fructifican en la noche.", color: "bg-amber-900", image: "1qoyIz0TLmrEo935n0VkqpLMpj2F-zcvs" },
-                { id: 1, commonName: "Mono Aullador Rojo", scientificName: "Alouatta seniculus", category: "Primates", habitat: "Dosel", info: "Ingeniero del bosque. Sus hábitos de alimentación promueven el crecimiento de nuevas ramas y la entrada de luz solar a las zonas bajas del bosque.", color: "bg-orange-700", image: "1ZA0JsTaJUnbOplOdBqQKizEmGin1xMpH" },
-                { id: 76, commonName: "Tití Cabeciblanco", scientificName: "Saguinus oedipus", category: "Primates", habitat: "Bosque Seco", info: "Joyas del Caribe. Protegemos su hábitat porque son los reforestadores más activos, dispersando semillas de árboles que otros animales no consumen.", color: "bg-slate-300", image: "1U73t7OpQozKkqkelvVrZRIvVMsTmOmKv" },
-                { id: 86, commonName: "Oso Perezoso", scientificName: "Bradypus variegatus", category: "Mamíferos", habitat: "Dosel", info: "Un ecosistema andante. Su ritmo pausado permite la vida de micro-organismos en su pelaje, demostrando la paz y salud de nuestro entorno.", color: "bg-stone-700", image: "1_emC_qGq0hU6fq5dIGouTLS5hjcFM_Bt" },
-                { id: 21, commonName: "Ardilla de Cola Roja", scientificName: "Sciurus granatensis", category: "Mamíferos", habitat: "Árboles", info: "Jardinera incansable. Al enterrar nueces y semillas que luego olvida, siembra involuntariamente cientos de árboles nativos cada año.", color: "bg-orange-900", image: "1cyQq43aizGJPcQ8s_KT6lP40nhbfGyPK" },
-                { id: 20, commonName: "Oso Hormiguero", scientificName: "Tamandua tetradactyla", category: "Mamíferos", habitat: "Bosque", info: "Controlador de insectos xilófagos. Mantiene sanos los troncos de nuestros árboles centenarios al regular las poblaciones de termitas.", color: "bg-amber-800", image: "10ZDVYkH3mNZx_FIoCWTFEEH5YtiXWVFZ" },
-                { id: 4, commonName: "Guacamaya Bandera", scientificName: "Ara macao", category: "Aves", habitat: "Selva", info: "Embajadora del color. Su presencia indica que nuestros bosques están bien conectados regionalmente, permitiendo el flujo de vida.", color: "bg-red-600", image: "18Am6EdZcpS7rluz1ce0mq1qupCCUxU9q" },
-                { id: 3, commonName: "Tucán Pico Iris", scientificName: "Ramphastos sulfuratus", category: "Aves", habitat: "Bosque", info: "Arquitecto del dosel. Dispersa semillas grandes que forman la estructura principal de la selva tropical de El Limonar.", color: "bg-emerald-600", image: "1BmEOSSQ-GsXMAJYcZlmYZLmBA4cBp3uT" },
-                { id: 5, commonName: "Loro Cabeciazul", scientificName: "Pionus menstruus", category: "Aves", habitat: "Selva", info: "Centinela social. Sus llamados alertan a otras especies sobre depredadores, manteniendo una red de seguridad compartida en el bosque.", color: "bg-blue-600", image: "1g9k43mkqOIk1p1ZTE1aRhJxOM4yLd6Cb" },
-                { id: 6, commonName: "Guacamayo Severo", scientificName: "Ara severus", category: "Aves", habitat: "Dosel", info: "Símbolo de lealtad. Parejas que anidan juntas por años, indicando que el hotel ofrece un ambiente estable y seguro para la vida silvestre.", color: "bg-green-700", image: "1zVAV-JBPPlVGHBZSrPIfIUnrol3h0B5B" },
-                { id: 7, commonName: "Bobo Punteado", scientificName: "Hypnelus ruficollis", category: "Aves", habitat: "Matorral", info: "Maestro del acecho. Controla insectos en zonas bajas, ayudando a mantener el equilibrio biológico cerca de nuestros senderos.", color: "bg-amber-600", image: "1YRYcPBOE7yqwBPphBq52HLebrBwHLF1n" },
-                { id: 8, commonName: "Canario Criollo", scientificName: "Sicalis flaveola", category: "Aves", habitat: "Jardines", info: "La música de El Limonar. Su presencia masiva indica una abundancia saludable de semillas silvestres en nuestras áreas verdes.", color: "bg-yellow-400", image: "1Y8j_tWbvD3xTvsY3oyG8lHU0ruEJzgHj" },
-                { id: 9, commonName: "Carpintero Pechipunteado", scientificName: "Colaptes punctigula", category: "Aves", habitat: "Troncos", info: "Sanador de cortezas. Elimina larvas que podrían enfermar a los árboles del bosque seco caribeño.", color: "bg-stone-700", image: "1Gh640OI7EJG2C6yMmP0c6pQfv3enDxJm" },
-                { id: 10, commonName: "Mosquerito Silbón", scientificName: "Camptostoma obsoletum", category: "Aves", habitat: "Ramas", info: "Aliado aéreo. Captura miles de mosquitos al día, protegiendo a nuestros huéspedes de forma biológica y silenciosa.", color: "bg-stone-400", image: "1d6V2JswnW46pZAn5CBjrHlAa5rTvoOAZ" },
-                { id: 11, commonName: "Garza Azul", scientificName: "Egretta caerulea", category: "Aves", habitat: "Humedales", info: "Elegancia en los canales. Mantiene el equilibrio de las poblaciones de pequeños peces y crustáceos en nuestros sistemas hídricos.", color: "bg-indigo-700", image: "1fVsgu05agLC6lqLNg65_5o9SgfuzKO1n" },
-                { id: 12, commonName: "Carpintero Real", scientificName: "Campephilus melanoleucos", category: "Aves", habitat: "Bosque", info: "Ingeniero de hábitats. Sus excavaciones sirven luego de refugio para abejas nativas y aves que no pueden construir sus propios nidos.", color: "bg-stone-600", image: "1cMKnEtb6EsOHqsPVNM--43CIh1Y1iZf-" },
-                { id: 13, commonName: "Gavilán Cienaguero", scientificName: "Busarellus nigricollis", category: "Aves", habitat: "Ciénaga", info: "Depredador de la salud hídrica. Regula la fauna acuática, asegurando que solo los individuos más aptos prosperen en la ciénaga.", color: "bg-yellow-700", image: "13PsJypK4SHk8gJC-5TxtfcuAmSTpOOim" },
-                { id: 14, commonName: "Martín Pescador", scientificName: "Chloroceryle amazona", category: "Aves", habitat: "Ríos", info: "Guardia del agua. Su presencia es garantía de que el agua de El Limonar es pura y rica en oxígeno y vida.", color: "bg-teal-800", image: "1PvB52AudBPoCXpyDmIlJ3qZJfRdhOvwg" },
-                { id: 15, commonName: "Gallito de Ciénaga", scientificName: "Jacana jacana", category: "Aves", habitat: "Lirios", info: "Caminante de ninfas. Sus patas largas ayudan a limpiar la superficie de las lagunas de materia orgánica en exceso.", color: "bg-indigo-600", image: "1SF3aa9jKRknXXVlgB620gAr3ghpFO41D" },
-                { id: 16, commonName: "Garza Tigre", scientificName: "Tigrisoma lineatum", category: "Aves", habitat: "Humedales", info: "Maestra del camuflaje. Indica la salud de los bordes de los humedales, donde la vida se esconde y florece.", color: "bg-amber-700", image: "19oYVUkpV75cxjDEmEY743GgA-Vlhcm1X" },
-                { id: 17, commonName: "Garcita Estriada", scientificName: "Butorides striata", category: "Aves", habitat: "Orilla", info: "Limpiadora de orillas. Controla los insectos que proliferan en las riberas, manteniendo el confort en nuestras zonas de descanso.", color: "bg-stone-500", image: "1UmR4z4LRZ5fP6xMp9A0G02JZGD_thhLs" },
-                { id: 18, commonName: "Monjita Cabeciamarilla", scientificName: "Chrysomus icterocephalus", category: "Aves", habitat: "Juncos", info: "Vibrante habitante de los humedales. Polinizadora de plantas acuáticas esenciales para la filtración natural del agua.", color: "bg-yellow-600", image: "12zFl7hBOhOO4uAZSflgBzaQP6f5tRkv-" },
-                { id: 19, commonName: "Hornero", scientificName: "Furnarius rufus", category: "Aves", habitat: "Caminos", info: "Arquitecto social. Sus nidos de barro son tan resistentes que brindan refugio térmico a otras especies durante años.", color: "bg-orange-300", image: "1HKGNhB055JBJ5H5n6nGHp88Yu_5Jzpee" },
-                { id: 31, commonName: "Pato Pisingo", scientificName: "Dendrocygna autumnalis", category: "Aves", habitat: "Lagunas", info: "Fertilizador acuático. Sus grupos ayudan a distribuir nutrientes entre los espejos de agua de la reserva.", color: "bg-amber-700", image: "1pSLksDPkyEuB46vQEj0T2wxKArNJS8P2" },
-                { id: 32, commonName: "Garceta Nívea", scientificName: "Egretta thula", category: "Aves", habitat: "Charcas", info: "Elegancia activa. Al remover el fondo con sus patas, oxigena el sustrato acuático y libera nutrientes atrapados.", color: "bg-sky-600", image: "1aP0ccBl6PbM30P7UlPs6M5jCYLd1s1zm" },
-                { id: 33, commonName: "Caracara", scientificName: "Caracara cheriway", category: "Aves", habitat: "Suelo", info: "Saneador del bosque. Como ave oportunista, limpia la reserva de materia orgánica en descomposición, evitando enfermedades.", color: "bg-stone-800", image: "1Qs1ho5wK-W5o9kcqi0BsMVsS9kjRT3B1" },
-                { id: 34, commonName: "Caracara Cabeciamarillo", scientificName: "Milvago chimachima", category: "Aves", habitat: "Áreas abiertas", info: "Médico de campo. Limpia garrapatas y parásitos de otros animales, un ejemplo asombroso de cooperación natural.", color: "bg-yellow-600", image: "1AiL-9QO3bBlkC1y3KgDEP6Nm6g-fpAa4" },
-                { id: 35, commonName: "Turpial Amarillo", scientificName: "Icterus nigrogularis", category: "Aves", habitat: "Bordes", info: "El sol de los senderos. Además de su canto, es un controlador vital de orugas que podrían defoliar arbustos jóvenes.", color: "bg-yellow-500", image: "1g6Gkewa-yk2MOjhjrKkZ4Eopq-CsP9mA" },
-                { id: 36, commonName: "Guacamaya Azul", scientificName: "Ara arauna", category: "Aves", habitat: "Palmas", info: "Majestuosidad en pareja. Su dependencia de las palmas reales subraya la importancia de conservar cada árbol de El Limonar.", color: "bg-blue-600", image: "1-ashIeBU5SSER_RJXRKZEylyBLXcvKH9" },
-                { id: 37, commonName: "Alcaraván", scientificName: "Vanellus chilensis", category: "Aves", habitat: "Pasto", info: "Guardián territorial. Alerta a todo el hotel sobre la presencia de extraños, protegiendo indirectamente los nidos de otras especies.", color: "bg-stone-500", image: "1xKjKafyeHCIKvwiZ1oXazhCTLuIX2QsW" },
-                { id: 38, commonName: "Tingua", scientificName: "Porphyrio martinica", category: "Aves", habitat: "Humedales", info: "Colores de la ciénaga. Es fundamental para controlar la sobrepoblación de plantas flotantes que podrían asfixiar las lagunas.", color: "bg-indigo-600", image: "1w2oTkRFTSYYAqGxAi8fEeslPjqPrxt6_" },
-                { id: 39, commonName: "Catica", scientificName: "Brotogeris jugularis", category: "Aves", habitat: "Frutales", info: "Amiga del sembrador. Al alimentarse de frutas carnosas, dispersa semillas fértiles a lo largo de todo el predio.", color: "bg-lime-600", image: "1-ysbyOTWxr8LLJ8KfV02lK6mqajlSPhg" },
-                { id: 40, commonName: "Perico Carisucio", scientificName: "Eupsittula pertinax", category: "Aves", habitat: "Bosque Seco", info: "Resiliencia tropical. Una especie adaptada al calor que ayuda a que el bosque seco se mantenga siempre verde y fértil.", color: "bg-green-600", image: "1S3ngWC3cJwM_6YiiwmGMbCtUO8ISogmp" },
-                { id: 41, commonName: "Carpintero Lineado", scientificName: "Dryocopus lineatus", category: "Aves", habitat: "Bosques", info: "Buscador de salud. Al taladrar madera muerta, ayuda al proceso de reciclaje de nutrientes de los troncos viejos.", color: "bg-red-700", image: "15BEYaC81JqihPvlseXI8HRb-FhoTbcf2" },
-                { id: 42, commonName: "Pitirre", scientificName: "Tyrannus melancholicus", category: "Aves", habitat: "Postes", info: "Feroz guardián de los cielos. Su valentía ahuyenta a rapaces que podrían amenazar a los polluelos de aves cantoras.", color: "bg-yellow-600", image: "111PNAaNu8Q3CUdysVWwAysmxlcIYQO0Q" },
-                { id: 43, commonName: "Pepitero Grisáceo", scientificName: "Saltator coerulescens", category: "Aves", habitat: "Bosque", info: "Gourmet de hojas. Su alimentación equilibrada ayuda a la poda natural de arbustos, permitiendo un crecimiento fuerte.", color: "bg-stone-400", image: "1OVfANId8-8BSkKGtoOEsvUR9UdoTJGmw" },
-                { id: 45, commonName: "Cucarachero", scientificName: "Troglodytes aedon", category: "Aves", habitat: "Jardines", info: "Pequeño gran aliado. Mantiene los rincones de las cabañas libres de arañas e insectos pequeños con su actividad infatigable.", color: "bg-orange-400", image: "1pu6pS_f9IJrlCvRzV9X0vQViMmgo43oo" },
-                { id: 46, commonName: "Martín Pescador Gigante", scientificName: "Megaceryle torquata", category: "Aves", habitat: "Ríos", info: "Rey de los canales hídricos. Un indicador de la abundancia de peces nativos en nuestros cursos de agua.", color: "bg-blue-800", image: "1xdQeJtEOixi84QMu0qTzHfwdDQXSG-5j" },
-                { id: 47, commonName: "Yacabó", scientificName: "Herpetotheres cachinnans", category: "Aves", habitat: "Dosel", info: "Controlador de serpientes. Ayuda a mantener en equilibrio la población de reptiles del hotel de manera natural.", color: "bg-orange-800", image: "169k3IyBM15ILaSJBchoyt5w_kqnGo9B4" },
-                { id: 48, commonName: "Paloma de Ojos Azules", scientificName: "Columbina sp.", category: "Aves", habitat: "Jardín", info: "Paz en los senderos. Consume semillas de plantas invasoras, ayudando a que el césped se mantenga nativo y sano.", color: "bg-stone-300", image: "1Roh_RatBR4krUbPB3eFNwI_10Ctw_PDw" },
-                { id: 49, commonName: "Cucarachero Currucuchú", scientificName: "Campylorhynchus griseus", category: "Aves", habitat: "Matorrales", info: "Maestros del canto grupal. Su labor social ayuda a descubrir fuentes de alimento para muchas otras especies.", color: "bg-stone-600", image: "1j-2E0HJmyCNA-Iv9k1_1G6Bu2A3UMOJ6" },
-                { id: 50, commonName: "Ibis", scientificName: "Phimosus icterocephalus", category: "Aves", habitat: "Lodo", info: "Oxigenador de pantanos. Al buscar comida en el barro, airea el sustrato permitiendo que las raíces de plantas acuáticas respiren.", color: "bg-stone-800", image: "1XFMJG1kolA7AW2pLc-aMRVXYnd09AQxu" },
-                { id: 51, commonName: "Sirirí Tijeretón", scientificName: "Tyrannus savana", category: "Aves", habitat: "Cielo", info: "Elegancia migratoria. Su presencia nos recuerda que El Limonar es un refugio continental para aves viajeras.", color: "bg-stone-500", image: "1Y7nRa-y3KjAbvAMuvW8Fl6I1r9m-S4nW" },
-                { id: 52, commonName: "Tangara Azul Gris", scientificName: "Thraupis episcopus", category: "Aves", habitat: "Frutales", info: "Vibrante azulejo. Polinizador clave de árboles de mango y papaya que alimentan a toda nuestra fauna silvestre.", color: "bg-blue-400", image: "1C0diwAkyO1cq7MZ5BRYvlmKvCAHB5Gq_" },
-                { id: 53, commonName: "Periquito de Anteojos", scientificName: "Forpus conspicillatus", category: "Aves", habitat: "Jardines", info: "Pequeño gran sembrador. Ayuda a que las áreas verdes del hotel se mantengan llenas de arbustos florales con su alimentación.", color: "bg-blue-300", image: "1Qt1tcdWpyo0lVV8BJbgH2TXwIPYW_zuz" },
-                { id: 54, commonName: "Andarríos Chico", scientificName: "Actitis macularius", category: "Aves", habitat: "Playas", info: "Equilibrio rítmico. Limpia las orillas de los ríos de larvas de mosquitos, facilitando caminatas más placenteras.", color: "bg-stone-500", image: "1FNfNgO_JfCU9cVCj8S9xmVW_8AVW91yD" },
-                { id: 55, commonName: "Caracara Gorgirrojo", scientificName: "Ibycter americanus", category: "Aves", habitat: "Bosque", info: "Guardián de panales. Controla la población de avispas y abejas africanizadas, permitiendo que solo las nativas prosperen.", color: "bg-red-800", image: "1QjJsRwUynAgMYLjTQdkjlU1agUSWQV62" },
-                { id: 56, commonName: "Paloma Inca", scientificName: "Columbina inca", category: "Aves", habitat: "Suelo", info: "Símbolo de calidez. Ayuda a limpiar los granos caídos de los jardines, manteniendo los suelos limpios y ordenados.", color: "bg-stone-400", image: "1stmr7Vt56YoQkmj3TpaeOLqUUWNUbKwT" },
-                { id: 57, commonName: "Martín Pescador", scientificName: "Chloroceryle amazona", category: "Aves", habitat: "Ríos", info: "Maestro del agua. Indica que los peces de nuestros canales están libres de contaminantes industriales.", color: "bg-teal-800", image: "1PvB52AudBPoCXpyDmIlJ3qZJfRdhOvwg" },
-                { id: 58, commonName: "Jacamará", scientificName: "Galbula ruficauda", category: "Aves", habitat: "Bordes", info: "Luz metálica. Se especializa en capturar polillas nocturnas que de día podrían afectar los brotes tiernos de nuestras flores.", color: "bg-emerald-700", image: "12PvYz43JPnkVXQeSfbq8_5IteFSAJDO8" },
-                { id: 59, commonName: "Oropéndola", scientificName: "Psarocolius decumanus", category: "Aves", habitat: "Dosel", info: "Arquitecta de nidos colgantes. Sus colonias son verdaderos rascacielos de biodiversidad en las ramas más altas.", color: "bg-yellow-700", image: "1pfUSbPjuF-MtB9uggtoDtkHtjkaTsOwU" },
-                { id: 60, commonName: "Gavilán Caminero", scientificName: "Rupornis magnirostris", category: "Aves", habitat: "Senderos", info: "Vigilante aéreo. Mantiene a raya las poblaciones de roedores en los linderos, garantizando la salud del hotel.", color: "bg-stone-700", image: "1qAjlxTy4HjKfKuYadIooGDh1p_gDotIi" },
-                { id: 61, commonName: "Garza Crestada", scientificName: "Pilherodius pileatus", category: "Aves", habitat: "Ríos", info: "Cara azul brillante. Es una de las aves más raras de ver, indicando la paz y poco estrés ambiental de nuestra reserva.", color: "bg-sky-400", image: "1_N8TtqS5syHdn_b6ZiS4GHxEAyqIw8MD" },
-                { id: 71, commonName: "Garza Real", scientificName: "Ardea alba", category: "Aves", habitat: "Lagunas", info: "Majestuosidad blanca. Ayuda a regular la población de peces grandes, manteniendo el ecosistema hídrico balanceado.", color: "bg-sky-500", image: "1R_IjXDfjxi2RrHl9aXGJhZYiDWC8hWUt" },
-                { id: 72, commonName: "Carrao", scientificName: "Aramus guarauna", category: "Aves", habitat: "Humedales", info: "Especialista en caracoles. Evita la sobrepoblación de moluscos que podrían dañar las raíces de los árboles acuáticos.", color: "bg-amber-800", image: "1oJTCSUAjUxZzRQyiEUBTObT_-g2WpXzr" },
-                { id: 74, commonName: "Titira Enmascarada", scientificName: "Tityra semifasciata", category: "Aves", habitat: "Dosel", info: "Luz entre ramas. Su presencia indica que la estructura del bosque alto se mantiene íntegra y saludable.", color: "bg-stone-400", image: "1QIGmsnoaSe8QDg0gC1FqCL812co6olNv" },
-                { id: 75, commonName: "Sirirí Gris", scientificName: "Tyrannus dominicensis", category: "Aves", habitat: "Áreas abiertas", info: "Defensor del patio. Su carácter vigilante mantiene los jardines libres de rapaces molestas para los huéspedes.", color: "bg-stone-500", image: "1iB7HOSVN8aDcj1f2MfiwOWvLjubQdT-B" },
-                { id: 77, commonName: "Piranga Roja", scientificName: "Piranga rubra", category: "Aves", habitat: "Bosques", info: "Rubí migratorio. Ayuda a pollinizar plantas que solo florecen cuando los días son más frescos y húmedos.", color: "bg-red-600", image: "1XzpPP7qd6StnjdiFvaKXBcv-FM0C423e" },
-                { id: 79, commonName: "Carpintero Habado", scientificName: "Melanerpes rubricapillus", category: "Aves", habitat: "Bosque Seco", info: "Carpintero social. Crea refugios fundamentales para que loros y lechuzas tengan un hogar seguro donde anidar.", color: "bg-red-500", image: "1zjENrGCeCk4HMn8VwVu41DPNWPAOiDAL" },
-                { id: 80, commonName: "Benteveo Rayado", scientificName: "Myiodynastes maculatus", category: "Aves", habitat: "Áreas arboladas", info: "Maestro protector. Su éxito al criar asegura que la cadena alimenticia de insectos voladores se mantenga estable.", color: "bg-stone-600", image: "1fXjmqHy8I6wUKT_4fjE62CcP_kwBgqxF" },
-                { id: 103, commonName: "Benteveo Común", scientificName: "Pitangus sulphuratus", category: "Aves", habitat: "Jardines", info: "Reconocible e indispensable. Es un controlador general de plagas, desde pequeños insectos hasta larvas de charcas.", color: "bg-yellow-600", image: "1AVv8lf6HjIq309eDVSiyrtdSqXByrHBw" },
-                { id: 104, commonName: "Garrapatero", scientificName: "Crotophaga sulcirostris", category: "Aves", habitat: "Áreas abiertas", info: "Médico de campo. Limpia a otros animales de parásitos molestos, un aliado para la salud de toda la fauna local.", color: "bg-stone-900", image: "14iS0VVAIu2V7zLn3N7xRo7SR3u5ozuRR" },
-                { id: 105, commonName: "Águila de Harris", scientificName: "Parabuteo unicinctus", category: "Aves", habitat: "Bosques", info: "La confluencia de la cadena. Al ser un depredador tope, garantiza que las poblaciones de mamíferos se mantengan sanas y fuertes.", color: "bg-stone-800", image: "1LzkD2NT9kwM1uY2wF7nmkltPpASeNXNu" },
-                { id: 106, commonName: "Perdiz Crestada", scientificName: "Colinus cristatus", category: "Aves", habitat: "Pastizales", info: "Caminante de suelos. Remueve la hojarasca ayudando a que el abono natural se incorpore a la tierra del bosque seco.", color: "bg-orange-900", image: "1r9SgcNOXwEu5PUce4_HbWSjwTWUQRC32" },
-                { id: 108, commonName: "Cucarachero Habado", scientificName: "Campylorhynchus nuchalis", category: "Aves", habitat: "Bordes", info: "Vigilante social. Vive en grupos que mantienen la salud de los arbustos perimetrales del hotel.", color: "bg-stone-500", image: "1fM6xgqUvsvc6-3yGwP9D0wtbm5m8vi1b" },
-                { id: 120, commonName: "Reinita Mielera", scientificName: "Coereba flaveola", category: "Aves", habitat: "Flores", info: "Un motor polinizador. Su actividad incansable permite que nuestras flores nativas produzcan semillas año tras año.", color: "bg-yellow-400", image: "12ZHgJGsNT4MQiGzXkitXts6kKllEVe45" },
-                { id: 121, commonName: "Mirlo Pardo", scientificName: "Turdus grayi", category: "Aves", habitat: "Jardines", info: "Locutor del amanecer. Su canto nos indica que el ecosistema ha descansado y está listo para un nuevo día lleno de vida.", color: "bg-amber-600", image: "1jC7tBw7aO5cF9Gb6YzG75cTyhiHYSTBW" },
-                { id: 122, commonName: "Colibrí Mango", scientificName: "Anthracothorax nigricollis", category: "Aves", habitat: "Jardines", info: "Destello de néctar. Sin él, muchas flores de El Limonar no podrían reproducirse, afectando a todo el jardín botánico.", color: "bg-indigo-900", image: "1M5CL3jrSEpKbl9jbFeHfjTm5AZpzPYLh" },
-                { id: 123, commonName: "Cabezón Aliblanco", scientificName: "Pachyramphus polychopterus", category: "Aves", habitat: "Bosque Seco", info: "Macho carismático. Se encarga de capturar insectos grandes que podrían afectar la salud de las ramas jóvenes de los árboles.", color: "bg-slate-600", image: "1kn-b4SUCiWXADrhrfvTXCkVr3pDzdyz0" },
-                { id: 124, commonName: "Urraca Pechiblanca", scientificName: "Cyanocorax affinis", category: "Aves", habitat: "Jardines", info: "Inteligencia pura. Son dispersoras de semillas de granos grandes y mantienen una organización social admirable en el hotel.", color: "bg-blue-800", image: "1dk1DOk16qWiaUQKUM5teLvacsUm1HQtI" },
-                { id: 125, commonName: "Mosquero Vientre Azufrado", scientificName: "Myiodynastes luteiventris", category: "Aves", habitat: "Bosques", info: "Visitante estacional. Ayuda a controlar la población de saltamontes durante los meses de mayor crecimiento vegetal.", color: "bg-yellow-500", image: "1-KnO6mEMDbpogl8bBF9de5kvujwvj7ib" },
-                { id: 25, commonName: "Tortuga Morrocoy", scientificName: "Chelonoidis carbonarius", category: "Reptiles", habitat: "Suelo", info: "Sabia sembradora de pasos lentos. Es vital para dispersar plantas que solo crecen en el suelo fértil de El Limonar.", color: "bg-orange-900", image: "1UuGunzSRgT_zWhv4IHB7127Xsq91EKeW" },
-                { id: 95, commonName: "Lagartija Coliazul", scientificName: "Holcosus festivus", category: "Reptiles", habitat: "Hojarasca", info: "Cazadora de luz. Controla los insectos de la superficie, facilitando que el abono natural del bosque se transforme.", color: "bg-blue-500", image: "1l6XOxdBGh-X_tyZN2VinRsP1bwhsWMXA" },
-                { id: 89, commonName: "Geco Cabeza Amarilla", scientificName: "Gonatodes albogularis", category: "Reptiles", habitat: "Troncos", info: "Aliado del descanso. Se alimenta de mosquitos en las cabañas, ofreciendo un control de plagas natural y silencioso.", color: "bg-orange-400", image: "1gLo-_fOaiyaPN2ZZ6TdW99jFBNzJ0quH" },
-                { id: 64, commonName: "Lagartija Arcoiris", scientificName: "Cnemidophorus lemniscatus", category: "Reptiles", habitat: "Suelo", info: "Brillo necesario. Su presencia indica un suelo rico en microfauna y libre de químicos nocivos.", color: "bg-cyan-500", image: "1mZW4alfPzfCC_SxXekx9p9ShyGU-1AHQ" },
-                { id: 63, commonName: "Babilla", scientificName: "Caiman crocodilus", category: "Reptiles", habitat: "Canales", info: "El gran regulador acuático. Garantiza que la biodiversidad de nuestros canales se mantenga diversa y equilibrada.", color: "bg-emerald-900", image: "1_pDWk7RFFVhq0CISLaGyfUiwOCtxpxwQ" },
-                { id: 62, commonName: "Basilisco", scientificName: "Basiliscus basiliscus", category: "Reptiles", habitat: "Riberas", info: "El milagro del agua. Su capacidad de correr sobre el agua indica un entorno saludable y lleno de energía vital.", color: "bg-green-800", image: "1rR1RLGec9lsHCrHVs5ptaKkyBdF5f4hM" },
-                { id: 24, commonName: "Tortuga Hicotea", scientificName: "Trachemys callirostris", category: "Reptiles", habitat: "Estanques", info: "Limpiadora de espejos de agua. Se encarga de procesar materia orgánica acuática, manteniendo los estanques translúcidos.", color: "bg-emerald-900", image: "1Xq1K3APozzgBjCz-cV-rmup5rjMqqAfM" },
-                { id: 23, commonName: "Lagarto Overo", scientificName: "Tupinambis teguixin", category: "Reptiles", habitat: "Bosque", info: "Explorador todoterreno. Ayuda a controlar desde pequeños roedores hasta insectos, siendo una pieza clave del bosque seco.", color: "bg-zinc-800", image: "1nZLlu7X8JR6cmzVt89Z5H4ySHoDsFc4F" },
-                { id: 22, commonName: "Iguana Verde", scientificName: "Iguana iguana", category: "Reptiles", habitat: "Riberas", info: "Guardiana del sol. Como gran herbívora, ayuda a podar naturalmente la vegetación de las orillas del agua.", color: "bg-lime-700", image: "1Q8E7PFNt8FQkuqlXHp_Jr8YnymLdiBK4" },
-                { id: 27, commonName: "Rana de Cristal", scientificName: "Nymphargus griffithsi", category: "Anfibios", habitat: "Quebradas", info: "Piel de salud. Su presencia es la garantía máxima de que nuestras aguas son cristalinas y libres de contaminantes.", color: "bg-emerald-400", image: "1OYrdh2RnWE2X5wGhYZhr1YX9CYP0gP1X" },
-                { id: 110, commonName: "Sapo Arlequín", scientificName: "Atelopus sp.", category: "Anfibios", habitat: "Arroyos", info: "Joyas del arroyo. Indican la pureza del aire y el agua en los rincones más profundos y protegidos de El Limonar.", color: "bg-yellow-400", image: "1MtAtx-mfFjE7wWivrb6nXYmncVW1qWkz" },
-                { id: 109, commonName: "Sapito Punteado Bicolor", scientificName: "Phyllomedusa bicolor", category: "Anfibios", habitat: "Zonas húmedas", info: "Resonancia húmeda. Su piel ayuda a que el ambiente mantenga una humedad óptima necesaria para otras especies de plantas.", color: "bg-lime-600", image: "1cLDTW_cDRdGU9G8-8tYATkc46Gd5Wa_r" },
-                { id: 94, commonName: "Sapo Común", scientificName: "Rhinella marina", category: "Anfibios", habitat: "Jardines", info: "Insecticida biológico. Un solo sapo protege metros cuadrados de jardín contra insectos que podrían dañar las flores.", color: "bg-stone-600", image: "1Bbc420rqnCns-H_0UypBc8TKpu8LhSN0" },
-                { id: 93, commonName: "Rana Platanera", scientificName: "Boana xerophylla", category: "Anfibios", habitat: "Zonas Húmedas", info: "Cantora de las lluvias. Su actividad indica que los ciclos naturales del agua en el hotel fluyen correctamente.", color: "bg-lime-500", image: "1-TDCaJH_KlHAahs7Mw6QPxzODpGdnYq0" },
-                { id: 66, commonName: "Ranita de Lluvia", scientificName: "Pristimantis sp.", category: "Anfibios", habitat: "Hojarasca", info: "Vida sin renacuajos. Al nacer directamente como ranitas, demuestran la asombrosa adaptación de la vida al bosque caribe.", color: "bg-lime-600", image: "1xl8BMkCegm_FwDX702XGl5CtAPDXAsXH" },
-                { id: 28, commonName: "Mariposa Monarca", scientificName: "Danaus plexippus", category: "Mariposas", habitat: "Jardines", info: "Viajera incansable. Une a El Limonar con el resto del continente, polinizando y sembrando vida en su ruta migratoria.", color: "bg-orange-500", image: "1dQQiwctr_DZkEAZ0wWhYm44cqGrJ2HUv" },
-                { id: 107, commonName: "Mariposa de Hojarasca", scientificName: "Archaeoprepona demophon", category: "Mariposas", habitat: "Follaje", info: "Maestra del disfraz. Nos enseña el valor de la mimetización y el respeto por el espacio de cada ser vivo.", color: "bg-orange-800", image: "1uplLqdMR6IN1WeMKIq3L68pp8SoRf4p5" },
-                { id: 90, commonName: "Mariposa Corazón", scientificName: "Parides sp.", category: "Mariposas", habitat: "Sombra", info: "Polinizadora de luz tenue. Asegura que las plantas del sotobosque, donde llega poca luz, también den semillas.", color: "bg-red-900", image: "1Brogiob5AS5RxznST-55g2zGnydPyFpj" },
-                { id: 87, commonName: "Mariposa Morfo", scientificName: "Morpho helenor", category: "Mariposas", habitat: "Senderos", info: "Destello azul. Su presencia es señal de un bosque maduro y rico en diversidad genética floral.", color: "bg-blue-600", image: "1AN0oKbPtPqYHSblHe-loPEzvYB3bHA51" },
-                { id: 85, commonName: "Mariposa Junonia", scientificName: "Junonia evarete", category: "Mariposas", habitat: "Sol", info: "Ocelos protectores. Sus 'ojos' en las alas nos hablan de la compleja red de defensa y supervivencia del bosque.", color: "bg-amber-700", image: "1Pfy98683vgDMZmo3mytOb3hLivXAiG1Y" },
-                { id: 84, commonName: "Mariposa Heliconius", scientificName: "Heliconius sp.", category: "Mariposas", habitat: "Bordes", info: "Mensajera de polen. Fundamental para la reproducción de las enredaderas nativas que decoran nuestros muros naturales.", color: "bg-orange-700", image: "1xDA4hbrsf51vivHbHWqbVdTyTTjfuMiE" },
-                { id: 78, commonName: "Mariposa Organillo", scientificName: "Hamadryas sp.", category: "Mariposas", habitat: "Troncos", info: "Sonido en el vuelo. Nos enseña que incluso las mariposas tienen su propia voz para marcar territorios y proteger la vida.", color: "bg-stone-400", image: "1fE0BODPYwcBXh4djolkgx1v_N1Xbj1OF" },
-                { id: 73, commonName: "Mariposa Búho", scientificName: "Caligo telamonius", category: "Mariposas", habitat: "Sombra", info: "Guardián del atardecer. Sus grandes ojos imitan a los búhos, protegiendo a la micro-fauna de depredadores pequeños.", color: "bg-amber-900", image: "1edvtItYvd8lAWoA_AgDooHHn9renSCSu" },
-                { id: 70, commonName: "Mariposa Pavo Real Blanca", scientificName: "Anartia jatrophae", category: "Mariposas", habitat: "Senderos", info: "Luz constante. Es una de nuestras polinizadoras más activas durante todo el año, sin importar la estación.", color: "bg-stone-300", image: "18oIt2DULgucOkQltLDKMqQw5AoNtDT03" },
-                { id: 69, commonName: "Mariposa Tronadora", scientificName: "Hamadryas feronia", category: "Mariposas", habitat: "Árboles", info: "Arte en el tronco. Su mimetismo perfecto con la corteza demuestra la unión indisoluble entre el insecto y el árbol.", color: "bg-stone-500", image: "1Zi3RX5Y4DV_wcSC_rpuT7W62z9VkoLwM" },
-                { id: 68, commonName: "Mariposa Anartia Roja", scientificName: "Anartia amathea", category: "Mariposas", habitat: "Flores", info: "Pasión polinizadora. Su color vibrante guía a otras especies hacia las flores que necesitan ser fecundadas.", color: "bg-red-600", image: "1QNLXkYB-fqb_4t-sCkBMQqUO3QA7RBUo" },
-                { id: 67, commonName: "Mariposa Tigre", scientificName: "Lycorea halia", category: "Mariposas", habitat: "Bordes", info: "Fuerza polinizadora. Muy activa en los bordes de la propiedad, asegurando la conectividad de los parches de vegetación.", color: "bg-orange-600", image: "134EhOKGK2jvKvKXU3bkMfcH_WwU6-Z3b" },
-                { id: 65, commonName: "Mariposa 88", scientificName: "Diaethria clymena", category: "Mariposas", habitat: "Agua", info: "Número de la naturaleza. Su belleza asombrosa nos indica la presencia de agua pura en las cercanías.", color: "bg-zinc-700", image: "10XfrMwEGJ2xEGjfXxcv4MBzk1Qba_-MJ" },
-                { id: 30, commonName: "Mariposa Malaquita", scientificName: "Siproeta stelenes", category: "Mariposas", habitat: "Bosque", info: "Joya verde esmeralda. Ayuda a descomponer jugos de frutas caídas, acelerando el ciclo de nutrientes en el suelo.", color: "bg-lime-500", image: "1EXwtFxf8V2XgO8csJAQnyl6W74PX_YOp" },
-                { id: 29, commonName: "Mariposa Amarilla", scientificName: "Phoebis sennae", category: "Mariposas", habitat: "Jardines", info: "Relámpago de sol. Es una polinizadora incansable que mantiene viva la llama de nuestros jardines ecológicos.", color: "bg-yellow-500", image: "1ZI37v5J0HuWZ_detOWBB_e2o4xBY5TQ0" },
-                { id: 111, commonName: "Araña Cyclosa", scientificName: "Cyclosa sp.", category: "Arácnidos", habitat: "Arbustos", info: "Maestra del engaño. Sus telas circulares protegen a nuestras plantas jóvenes de insectos que podrían devorar sus brotes.", color: "bg-zinc-600", image: "1EDZR4tgVslBmmLQjuPZ_3eAw3j44m0In" },
-                { id: 96, commonName: "Araña Tigre", scientificName: "Argiope argentata", category: "Arácnidos", habitat: "Jardines", info: "Arquitecta de seda plateada. Su presencia es señal de un jardín sano donde la red de la vida está completa.", color: "bg-yellow-600", image: "12rpb0nFna6vnuhQ0mTbZTd20PJ6pB_U7" },
-                { id: 97, commonName: "Araña Cabeza de Flecha", scientificName: "Micrathena sp.", category: "Arácnidos", habitat: "Arbustos", info: "Geometría sagrada. Sus formas únicas controlan insectos voladores molestos, haciendo tu estancia más confortable.", color: "bg-amber-700", image: "19RpzkfgBIZV2Gx7ZnOJrIe_n2oce_EDe" }
+                // PRIMATES Y MAMÍFEROS
+                { id: 44, commonName: "Loro Real (Rosita)", scientificName: "Amazona ochrocephala", category: "Aves", info: "Rosita es la anfitriona de El Limonar. Su especie ayuda a dispersar semillas de palmas nativas, regenerando la cobertura vegetal que nos da sombra.", image: "1DHzFmNrPyujZU3y6D2H8v1qSTJC8Z6dz" },
+                { id: 2, commonName: "Mono Marteja", scientificName: "Aotus lemurinus", category: "Primates", info: "Un centinela nocturno. Controla poblaciones de insectos y es un dispersor clave de semillas de árboles que solo fructifican en la noche.", image: "1qoyIz0TLmrEo935n0VkqpLMpj2F-zcvs" },
+                { id: 1, commonName: "Mono Aullador Rojo", scientificName: "Alouatta seniculus", category: "Primates", info: "Ingeniero del bosque. Sus hábitos de alimentación promueven el crecimiento de nuevas ramas y la entrada de luz solar a las zonas bajas.", image: "1ZA0JsTaJUnbOplOdBqQKizEmGin1xMpH" },
+                { id: 76, commonName: "Tití Cabeciblanco", scientificName: "Saguinus oedipus", category: "Primates", info: "Joyas del Caribe. Protegemos su hábitat porque son los reforestadores más activos, dispersando semillas de árboles que otros animales no consumen.", image: "1U73t7OpQozKkqkelvVrZRIvVMsTmOmKv" },
+                { id: 86, commonName: "Oso Perezoso", scientificName: "Bradypus variegatus", category: "Mamíferos", info: "Un ecosistema andante. Su ritmo pausado permite la vida de micro-organismos en su pelaje, demostrando la paz y salud de nuestro entorno.", image: "1_emC_qGq0hU6fq5dIGouTLS5hjcFM_Bt" },
+                { id: 21, commonName: "Ardilla de Cola Roja", scientificName: "Sciurus granatensis", category: "Mamíferos", info: "Jardinera incansable. Al enterrar nueces y semillas que luego olvida, siembra involuntariamente cientos de árboles nativos cada año.", image: "1cyQq43aizGJPcQ8s_KT6lP40nhbfGyPK" },
+                { id: 20, commonName: "Oso Hormiguero", scientificName: "Tamandua tetradactyla", category: "Mamíferos", info: "Controlador de insectos xilófagos. Mantiene sanos los troncos de nuestros árboles centenarios al regular las poblaciones de termitas.", image: "10ZDVYkH3mNZx_FIoCWTFEEH5YtiXWVFZ" },
+                
+                // AVES
+                { id: 4, commonName: "Guacamaya Bandera", scientificName: "Ara macao", category: "Aves", info: "Embajadora del color. Su presencia indica que nuestros bosques están bien conectados regionalmente, permitiendo el flujo de vida.", image: "18Am6EdZcpS7rluz1ce0mq1qupCCUxU9q" },
+                { id: 3, commonName: "Tucán Pico Iris", scientificName: "Ramphastos sulfuratus", category: "Aves", info: "Arquitecto del dosel. Dispersa semillas grandes que forman la estructura principal de la selva tropical de El Limonar.", image: "1BmEOSSQ-GsXMAJYcZlmYZLmBA4cBp3uT" },
+                { id: 5, commonName: "Loro Cabeciazul", scientificName: "Pionus menstruus", category: "Aves", info: "Centinela social. Sus llamados alertan a otras especies sobre depredadores, manteniendo una red de seguridad compartida en el bosque.", image: "1g9k43mkqOIk1p1ZTE1aRhJxOM4yLd6Cb" },
+                { id: 6, commonName: "Guacamayo Severo", scientificName: "Ara severus", category: "Aves", info: "Símbolo de lealtad. Parejas que anidan juntas por años, indicando que el hotel ofrece un ambiente estable y seguro.", image: "1zVAV-JBPPlVGHBZSrPIfIUnrol3h0B5B" },
+                { id: 7, commonName: "Bobo Punteado", scientificName: "Hypnelus ruficollis", category: "Aves", info: "Maestro del acecho. Controla insectos en zonas bajas, ayudando a mantener el equilibrio biológico cerca de nuestros senderos.", image: "1YRYcPBOE7yqwBPphBq52HLebrBwHLF1n" },
+                { id: 8, commonName: "Canario Criollo", scientificName: "Sicalis flaveola", category: "Aves", info: "La música de El Limonar. Su presencia masiva indica una abundancia saludable de semillas silvestres en nuestras áreas verdes.", image: "1Y8j_tWbvD3xTvsY3oyG8lHU0ruEJzgHj" },
+                { id: 9, commonName: "Carpintero Pechipunteado", scientificName: "Colaptes punctigula", category: "Aves", info: "Sanador de cortezas. Elimina larvas que podrían enfermar a los árboles del bosque seco caribeño.", image: "1Gh640OI7EJG2C6yMmP0c6pQfv3enDxJm" },
+                { id: 10, commonName: "Mosquerito Silbón", scientificName: "Camptostoma obsoletum", category: "Aves", info: "Aliado aéreo. Captura miles de mosquitos al día, protegiendo a nuestros huéspedes de forma biológica y silenciosa.", image: "1d6V2JswnW46pZAn5CBjrHlAa5rTvoOAZ" },
+                { id: 11, commonName: "Garza Azul", scientificName: "Egretta caerulea", category: "Aves", info: "Elegancia en los canales. Mantiene el equilibrio de las poblaciones de pequeños peces y crustáceos en nuestros sistemas hídricos.", image: "1fVsgu05agLC6lqLNg65_5o9SgfuzKO1n" },
+                { id: 12, commonName: "Carpintero Real", scientificName: "Campephilus melanoleucos", category: "Aves", info: "Ingeniero de hábitats. Sus excavaciones sirven luego de refugio para abejas nativas y aves que no construyen sus propios nidos.", image: "1cMKnEtb6EsOHqsPVNM--43CIh1Y1iZf-" },
+                { id: 13, commonName: "Gavilán Cienaguero", scientificName: "Busarellus nigricollis", category: "Aves", info: "Depredador de la salud hídrica. Regula la fauna acuática, asegurando que solo los individuos más aptos prosperen en la ciénaga.", image: "13PsJypK4SHk8gJC-5TxtfcuAmSTpOOim" },
+                { id: 14, commonName: "Martín Pescador", scientificName: "Chloroceryle amazona", category: "Aves", info: "Guardia del agua. Su presencia es garantía de que el agua de El Limonar es pura y rica en oxígeno y vida.", image: "1PvB52AudBPoCXpyDmIlJ3qZJfRdhOvwg" },
+                { id: 15, commonName: "Gallito de Ciénaga", scientificName: "Jacana jacana", category: "Aves", info: "Caminante de ninfas. Sus patas largas ayudan a limpiar la superficie de las lagunas de materia orgánica en exceso.", image: "1SF3aa9jKRknXXVlgB620gAr3ghpFO41D" },
+                { id: 16, commonName: "Garza Tigre", scientificName: "Tigrisoma lineatum", category: "Aves", info: "Maestra del camuflaje. Indica la salud de los bordes de los humedales, donde la vida se esconde y florece.", image: "19oYVUkpV75cxjDEmEY743GgA-Vlhcm1X" },
+                { id: 17, commonName: "Garcita Estriada", scientificName: "Butorides striata", category: "Aves", info: "Limpiadora de orillas. Controla los insectos que proliferan en las riberas, manteniendo el confort en nuestras zonas de descanso.", image: "1UmR4z4LRZ5fP6xMp9A0G02JZGD_thhLs" },
+                { id: 18, commonName: "Monjita Cabeciamarilla", scientificName: "Chrysomus icterocephalus", category: "Aves", info: "Vibrante habitante de los humedales. Polinizadora de plantas acuáticas esenciales para la filtración natural del agua.", image: "12zFl7hBOhOO4uAZSflgBzaQP6f5tRkv-" },
+                { id: 19, commonName: "Hornero", scientificName: "Furnarius rufus", category: "Aves", info: "Arquitecto social. Sus nidos de barro son tan resistentes que brindan refugio térmico a otras especies durante años.", image: "1HKGNhB055JBJ5H5n6nGHp88Yu_5Jzpee" },
+                { id: 31, commonName: "Pato Pisingo", scientificName: "Dendrocygna autumnalis", category: "Aves", info: "Fertilizador acuático. Sus grupos ayudan a distribuir nutrientes entre los espejos de agua de la reserva.", image: "1pSLksDPkyEuB46vQEj0T2wxKArNJS8P2" },
+                { id: 32, commonName: "Garceta Nívea", scientificName: "Egretta thula", category: "Aves", info: "Elegancia activa. Al remover el fondo con sus patas, oxigena el sustrato acuático y libera nutrientes atrapados.", image: "1aP0ccBl6PbM30P7UlPs6M5jCYLd1s1zm" },
+                { id: 33, commonName: "Caracara", scientificName: "Caracara cheriway", category: "Aves", info: "Saneador del bosque. Como ave oportunista, limpia la reserva de materia orgánica en descomposición, evitando enfermedades.", image: "1Qs1ho5wK-W5o9kcqi0BsMVsS9kjRT3B1" },
+                { id: 34, commonName: "Caracara Cabeciamarillo", scientificName: "Milvago chimachima", category: "Aves", info: "Médico de campo. Limpia garrapatas y parásitos de otros animales, un ejemplo asombroso de cooperación natural.", image: "1AiL-9QO3bBlkC1y3KgDEP6Nm6g-fpAa4" },
+                { id: 35, commonName: "Turpial Amarillo", scientificName: "Icterus nigrogularis", category: "Aves", info: "El sol de los senderos. Además de su canto, es un controlador vital de orugas que podrían defoliar arbustos jóvenes.", image: "1g6Gkewa-yk2MOjhjrKkZ4Eopq-CsP9mA" },
+                { id: 36, commonName: "Guacamaya Azul", scientificName: "Ara arauna", category: "Aves", info: "Majestuosidad en pareja. Su dependencia de las palmas reales subraya la importancia de conservar cada árbol de El Limonar.", image: "1-ashIeBU5SSER_RJXRKZEylyBLXcvKH9" },
+                { id: 37, commonName: "Alcaraván", scientificName: "Vanellus chilensis", category: "Aves", info: "Guardián territorial. Alerta a todo el hotel sobre la presencia de extraños, protegiendo indirectamente los nidos de otras especies.", image: "1xKjKafyeHCIKvwiZ1oXazhCTLuIX2QsW" },
+                { id: 38, commonName: "Tingua", scientificName: "Porphyrio martinica", category: "Aves", info: "Colores de la ciénaga. Es fundamental para controlar la sobrepoblación de plantas flotantes que podrían asfixiar las lagunas.", image: "1w2oTkRFTSYYAqGxAi8fEeslPjqPrxt6_" },
+                { id: 39, commonName: "Catica", scientificName: "Brotogeris jugularis", category: "Aves", info: "Amiga del sembrador. Al alimentarse de frutas carnosas, dispersa semillas fértiles a lo largo de todo el predio.", image: "1-ysbyOTWxr8LLJ8KfV02lK6mqajlSPhg" },
+                { id: 40, commonName: "Perico Carisucio", scientificName: "Eupsittula pertinax", category: "Aves", info: "Resiliencia tropical. Una especie adaptada al calor que ayuda a que el bosque seco se mantenga siempre verde y fértil.", image: "1S3ngWC3cJwM_6YiiwmGMbCtUO8ISogmp" },
+                { id: 41, commonName: "Carpintero Lineado", scientificName: "Dryocopus lineatus", category: "Aves", info: "Buscador de salud. Al taladrar madera muerta, ayuda al proceso de reciclaje de nutrientes de los troncos viejos.", image: "15BEYaC81JqihPvlseXI8HRb-FhoTbcf2" },
+                { id: 42, commonName: "Pitirre", scientificName: "Tyrannus melancholicus", category: "Aves", info: "Feroz guardián de los cielos. Su valentía ahuyenta a rapaces que podrían amenazar a los polluelos de aves cantoras.", image: "111PNAaNu8Q3CUdysVWwAysmxlcIYQO0Q" },
+                { id: 43, commonName: "Pepitero Grisáceo", scientificName: "Saltator coerulescens", category: "Aves", info: "Gourmet de hojas. Su alimentación equilibrada ayuda a la poda natural de arbustos, permitiendo un crecimiento fuerte.", image: "1OVfANId8-8BSkKGtoOEsvUR9UdoTJGmw" },
+                { id: 45, commonName: "Cucarachero", scientificName: "Troglodytes aedon", category: "Aves", info: "Pequeño gran aliado. Mantiene los rincones de las cabañas libres de arañas e insectos pequeños con su actividad infatigable.", image: "1pu6pS_f9IJrlCvRzV9X0vQViMmgo43oo" },
+                { id: 46, commonName: "Martín Pescador Gigante", scientificName: "Megaceryle torquata", category: "Aves", info: "Rey de los canales hídricos. Un indicador de la abundancia de peces nativos en nuestros cursos de agua.", image: "1xdQeJtEOixi84QMu0qTzHfwdDQXSG-5j" },
+                { id: 47, commonName: "Yacabó", scientificName: "Herpetotheres cachinnans", category: "Aves", info: "Controlador de serpientes. Ayuda a mantener en equilibrio la población de reptiles del hotel de manera natural.", image: "169k3IyBM15ILaSJBchoyt5w_kqnGo9B4" },
+                { id: 48, commonName: "Paloma de Ojos Azules", scientificName: "Columbina sp.", category: "Aves", info: "Paz en los senderos. Consume semillas de plantas invasoras, ayudando a que el césped se mantenga nativo y sano.", image: "1Roh_RatBR4krUbPB3eFNwI_10Ctw_PDw" },
+                { id: 49, commonName: "Cucarachero Currucuchú", scientificName: "Campylorhynchus griseus", category: "Aves", info: "Maestros del canto grupal. Su labor social ayuda a descubrir fuentes de alimento para muchas otras especies.", image: "1j-2E0HJmyCNA-Iv9k1_1G6Bu2A3UMOJ6" },
+                { id: 50, commonName: "Ibis", scientificName: "Phimosus icterocephalus", category: "Aves", info: "Oxigenador de pantanos. Al buscar comida en el barro, airea el sustrato permitiendo que las raíces de plantas acuáticas respiren.", image: "1XFMJG1kolA7AW2pLc-aMRVXYnd09AQxu" },
+                { id: 51, commonName: "Sirirí Tijeretón", scientificName: "Tyrannus savana", category: "Aves", info: "Elegancia migratoria. Su presencia nos recuerda que El Limonar es un refugio continental para aves viajeras.", image: "1Y7nRa-y3KjAbvAMuvW8Fl6I1r9m-S4nW" },
+                { id: 52, commonName: "Tangara Azul Gris", scientificName: "Thraupis episcopus", category: "Aves", info: "Vibrante azulejo. Polinizador clave de árboles de mango y papaya que alimentan a toda nuestra fauna silvestre.", image: "1C0diwAkyO1cq7MZ5BRYvlmKvCAHB5Gq_" },
+                { id: 53, commonName: "Periquito de Anteojos", scientificName: "Forpus conspicillatus", category: "Aves", info: "Pequeño gran sembrador. Ayuda a que las áreas verdes del hotel se mantengan llenas de arbustos florales con su alimentación.", image: "1Qt1tcdWpyo0lVV8BJbgH2TXwIPYW_zuz" },
+                { id: 54, commonName: "Andarríos Chico", scientificName: "Actitis macularius", category: "Aves", info: "Equilibrio rítmico. Limpia las orillas de los ríos de larvas de mosquitos, facilitando caminatas más placenteras.", image: "1FNfNgO_JfCU9cVCj8S9xmVW_8AVW91yD" },
+                { id: 55, commonName: "Caracara Gorgirrojo", scientificName: "Ibycter americanus", category: "Aves", info: "Guardián de panales. Controla la población de avispas y abejas africanizadas, permitiendo que solo las nativas prosperen.", image: "1QjJsRwUynAgMYLjTQdkjlU1agUSWQV62" },
+                { id: 56, commonName: "Paloma Inca", scientificName: "Columbina inca", category: "Aves", info: "Símbolo de calidez. Ayuda a limpiar los granos caídos de los jardines, manteniendo los suelos limpios y ordenados.", image: "1stmr7Vt56YoQkmj3TpaeOLqUUWNUbKwT" },
+                { id: 57, commonName: "Martín Pescador", scientificName: "Chloroceryle amazona", category: "Aves", info: "Maestro del agua. Indica que los peces de nuestros canales están libres de contaminantes industriales.", image: "1PvB52AudBPoCXpyDmIlJ3qZJfRdhOvwg" },
+                { id: 58, commonName: "Jacamará", scientificName: "Galbula ruficauda", category: "Aves", info: "Luz metálica. Se especializa en capturar polillas nocturnas que de día podrían afectar los brotes tiernos de nuestras flores.", image: "12PvYz43JPnkVXQeSfbq8_5IteFSAJDO8" },
+                { id: 59, commonName: "Oropéndola", scientificName: "Psarocolius decumanus", category: "Aves", info: "Arquitecta de nidos colgantes. Sus colonias son verdaderos rascacielos de biodiversidad en las ramas más altas.", image: "1pfUSbPjuF-MtB9uggtoDtkHtjkaTsOwU" },
+                { id: 60, commonName: "Gavilán Caminero", scientificName: "Rupornis magnirostris", category: "Aves", info: "Vigilante aéreo. Mantiene a raya las poblaciones de roedores en los linderos, garantizando la salud del hotel.", image: "1qAjlxTy4HjKfKuYadIooGDh1p_gDotIi" },
+                { id: 61, commonName: "Garza Crestada", scientificName: "Pilherodius pileatus", category: "Aves", info: "Cara azul brillante. Es una de las aves más raras de ver, indicando la paz y poco estrés ambiental de nuestra reserva.", image: "1_N8TtqS5syHdn_b6ZiS4GHxEAyqIw8MD" },
+                { id: 71, commonName: "Garza Real", scientificName: "Ardea alba", category: "Aves", info: "Majestuosidad blanca. Ayuda a regular la población de peces grandes, manteniendo el ecosistema hídrico balanceado.", image: "1R_IjXDfjxi2RrHl9aXGJhZYiDWC8hWUt" },
+                { id: 72, commonName: "Carrao", scientificName: "Aramus guarauna", category: "Aves", info: "Especialista en caracoles. Evita la sobrepoblación de moluscos que podrían dañar las raíces de los árboles acuáticos.", image: "1oJTCSUAjUxZzRQyiEUBTObT_-g2WpXzr" },
+                { id: 74, commonName: "Titira Enmascarada", scientificName: "Tityra semifasciata", category: "Aves", info: "Luz entre ramas. Su presencia indica que la estructura del bosque alto se mantiene íntegra y saludable.", image: "1QIGmsnoaSe8QDg0gC1FqCL812co6olNv" },
+                { id: 75, commonName: "Sirirí Gris", scientificName: "Tyrannus dominicensis", category: "Aves", info: "Defensor del patio. Su carácter vigilante mantiene los jardines libres de rapaces molestas para los huéspedes.", image: "1iB7HOSVN8aDcj1f2MfiwOWvLjubQdT-B" },
+                { id: 77, commonName: "Piranga Roja", scientificName: "Piranga rubra", category: "Aves", info: "Rubí migratorio. Ayuda a pollinizar plantas que solo florecen cuando los días son más frescos y húmedos.", image: "1XzpPP7qd6StnjdiFvaKXBcv-FM0C423e" },
+                { id: 79, commonName: "Carpintero Habado", scientificName: "Melanerpes rubricapillus", category: "Aves", info: "Carpintero social. Crea refugios fundamentales para que loros y lechuzas tengan un hogar seguro donde anidar.", image: "1zjENrGCeCk4HMn8VwVu41DPNWPAOiDAL" },
+                { id: 80, commonName: "Benteveo Rayado", scientificName: "Myiodynastes maculatus", category: "Aves", info: "Maestro protector. Su éxito al criar asegura que la cadena alimenticia de insectos voladores se mantenga estable.", image: "1fXjmqHy8I6wUKT_4fjE62CcP_kwBgqxF" },
+                { id: 103, commonName: "Benteveo Común", scientificName: "Pitangus sulphuratus", category: "Aves", info: "Reconocible e indispensable. Es un controlador general de plagas, desde pequeños insectos hasta larvas de charcas.", image: "1AVv8lf6HjIq309eDVSiyrtdSqXByrHBw" },
+                { id: 104, commonName: "Garrapatero", scientificName: "Crotophaga sulcirostris", category: "Aves", info: "Médico de campo. Limpia a otros animales de parásitos molestos, un aliado para la salud de toda la fauna local.", image: "14iS0VVAIu2V7zLn3N7xRo7SR3u5ozuRR" },
+                { id: 105, commonName: "Águila de Harris", scientificName: "Parabuteo unicinctus", category: "Aves", info: "La confluencia de la cadena. Al ser un depredador tope, garantiza que las poblaciones de mamíferos se mantengan sanas.", image: "1LzkD2NT9kwM1uY2wF7nmkltPpASeNXNu" },
+                { id: 106, commonName: "Perdiz Crestada", scientificName: "Colinus cristatus", category: "Aves", info: "Caminante de suelos. Remueve la hojarasca ayudando a que el abono natural se incorpore a la tierra del bosque seco.", image: "1r9SgcNOXwEu5PUce4_HbWSjwTWUQRC32" },
+                { id: 108, commonName: "Cucarachero Habado", scientificName: "Campylorhynchus nuchalis", category: "Aves", info: "Vigilante social. Vive en grupos que mantienen la salud de los arbustos perimetrales del hotel.", image: "1fM6xgqUvsvc6-3yGwP9D0wtbm5m8vi1b" },
+                { id: 120, commonName: "Reinita Mielera", scientificName: "Coereba flaveola", category: "Aves", info: "Un motor polinizador. Su actividad incansable permite que nuestras flores nativas produzcan semillas año tras año.", image: "12ZHgJGsNT4MQiGzXkitXts6kKllEVe45" },
+                { id: 121, commonName: "Mirlo Pardo", scientificName: "Turdus grayi", category: "Aves", info: "Locutor del amanecer. Su canto nos indica que el ecosistema ha descansado y está listo para un nuevo día.", image: "1jC7tBw7aO5cF9Gb6YzG75cTyhiHYSTBW" },
+                { id: 122, commonName: "Colibrí Mango", scientificName: "Anthracothorax nigricollis", category: "Aves", info: "Destello de néctar. Sin él, muchas flores de El Limonar no podrían reproducirse, afectando a todo el jardín botánico.", image: "1M5CL3jrSEpKbl9jbFeHfjTm5AZpzPYLh" },
+                { id: 123, commonName: "Cabezón Aliblanco", scientificName: "Pachyramphus polychopterus", category: "Aves", info: "Macho carismático. Se encarga de capturar insectos grandes que podrían afectar la salud de las ramas jóvenes.", image: "1kn-b4SUCiWXADrhrfvTXCkVr3pDzdyz0" },
+                { id: 124, commonName: "Urraca Pechiblanca", scientificName: "Cyanocorax affinis", category: "Aves", info: "Inteligencia pura. Son dispersoras de semillas de granos grandes y mantienen una organización social admirable.", image: "1dk1DOk16qWiaUQKUM5teLvacsUm1HQtI" },
+                { id: 125, commonName: "Mosquero Vientre Azufrado", scientificName: "Myiodynastes luteiventris", category: "Aves", info: "Visitante estacional. Ayuda a controlar la población de saltamontes durante los meses de mayor crecimiento.", image: "1-KnO6mEMDbpogl8bBF9de5kvujwvj7ib" },
+
+                // REPTILES
+                { id: 25, commonName: "Tortuga Morrocoy", scientificName: "Chelonoidis carbonarius", category: "Reptiles", info: "Sabia sembradora de pasos lentos. Es vital para dispersar plantas que solo crecen en el suelo fértil de El Limonar.", image: "1UuGunzSRgT_zWhv4IHB7127Xsq91EKeW" },
+                { id: 95, commonName: "Lagartija Coliazul", scientificName: "Holcosus festivus", category: "Reptiles", info: "Cazadora de luz. Controla los insectos de la superficie, facilitando que el abono natural del bosque se transforme.", image: "1l6XOxdBGh-X_tyZN2VinRsP1bwhsWMXA" },
+                { id: 89, commonName: "Geco Cabeza Amarilla", scientificName: "Gonatodes albogularis", category: "Reptiles", info: "Aliado del descanso. Se alimenta de mosquitos en las cabañas, ofreciendo un control de plagas natural y silencioso.", image: "1gLo-_fOaiyaPN2ZZ6TdW99jFBNzJ0quH" },
+                { id: 64, commonName: "Lagartija Arcoiris", scientificName: "Cnemidophorus lemniscatus", category: "Reptiles", info: "Brillo necesario. Su presencia indica un suelo rico en microfauna y libre de químicos nocivos.", image: "1mZW4alfPzfCC_SxXekx9p9ShyGU-1AHQ" },
+                { id: 63, commonName: "Babilla", scientificName: "Caiman crocodilus", category: "Reptiles", info: "El gran regulador acuático. Garantiza que la biodiversidad de nuestros canales se mantenga diversa y equilibrada.", image: "1_pDWk7RFFVhq0CISLaGyfUiwOCtxpxwQ" },
+                { id: 62, commonName: "Basilisco", scientificName: "Basiliscus basiliscus", category: "Reptiles", info: "El milagro del agua. Su capacidad de correr sobre el agua indica un entorno saludable y lleno de energía vital.", image: "1rR1RLGec9lsHCrHVs5ptaKkyBdF5f4hM" },
+                { id: 24, commonName: "Tortuga Hicotea", scientificName: "Trachemys callirostris", category: "Reptiles", info: "Limpiadora de espejos de agua. Se encarga de procesar materia orgánica acuática, manteniendo los estanques.", image: "1Xq1K3APozzgBjCz-cV-rmup5rjMqqAfM" },
+                { id: 23, commonName: "Lagarto Overo", scientificName: "Tupinambis teguixin", category: "Reptiles", info: "Explorador todoterreno. Ayuda a controlar desde pequeños roedores hasta insectos, pieza clave del bosque seco.", image: "1nZLlu7X8JR6cmzVt89Z5H4ySHoDsFc4F" },
+                { id: 22, commonName: "Iguana Verde", scientificName: "Iguana iguana", category: "Reptiles", info: "Guardiana del sol. Como gran herbívora, ayuda a podar naturalmente la vegetación de las orillas del agua.", image: "1Q8E7PFNt8FQkuqlXHp_Jr8YnymLdiBK4" },
+
+                // ANFIBIOS
+                { id: 27, commonName: "Rana de Cristal", scientificName: "Nymphargus griffithsi", category: "Anfibios", info: "Piel de salud. Su presencia es la garantía máxima de que nuestras aguas son cristalinas y libres de contaminantes.", image: "1OYrdh2RnWE2X5wGhYZhr1YX9CYP0gP1X" },
+                { id: 110, commonName: "Sapo Arlequín", scientificName: "Atelopus sp.", category: "Anfibios", info: "Joyas del arroyo. Indican la pureza del aire y el agua en los rincones más profundos y protegidos de El Limonar.", image: "1MtAtx-mfFjE7wWivrb6nXYmncVW1qWkz" },
+                { id: 109, commonName: "Sapito Punteado Bicolor", scientificName: "Phyllomedusa bicolor", category: "Anfibios", info: "Resonancia húmeda. Su piel ayuda a que el ambiente mantenga una humedad óptima necesaria para las plantas.", image: "1cLDTW_cDRdGU9G8-8tYATkc46Gd5Wa_r" },
+                { id: 94, commonName: "Sapo Común", scientificName: "Rhinella marina", category: "Anfibios", info: "Insecticida biológico. Un solo sapo protege metros cuadrados de jardín contra insectos que dañarían las flores.", image: "1Bbc420rqnCns-H_0UypBc8TKpu8LhSN0" },
+                { id: 93, commonName: "Rana Platanera", scientificName: "Boana xerophylla", category: "Anfibios", info: "Cantora de las lluvias. Su actividad indica que los ciclos naturales del agua en el hotel fluyen correctamente.", image: "1-TDCaJH_KlHAahs7Mw6QPxzODpGdnYq0" },
+                { id: 66, commonName: "Ranita de Lluvia", scientificName: "Pristimantis sp.", category: "Anfibios", info: "Vida sin renacuajos. Al nacer directamente como ranitas, demuestran la asombrosa adaptación de la vida al Caribe.", image: "1xl8BMkCegm_FwDX702XGl5CtAPDXAsXH" },
+
+                // MARIPOSAS
+                { id: 28, commonName: "Mariposa Monarca", scientificName: "Danaus plexippus", category: "Mariposas", info: "Viajera incansable. Une a El Limonar con el resto del continente polinizando y sembrando vida.", image: "1dQQiwctr_DZkEAZ0wWhYm44cqGrJ2HUv" },
+                { id: 107, commonName: "Mariposa de Hojarasca", scientificName: "Archaeoprepona demophon", category: "Mariposas", info: "Maestra del disfraz. Nos enseña el valor de la mimetización y el respeto por el espacio de cada ser vivo.", image: "1uplLqdMR6IN1WeMKIq3L68pp8SoRf4p5" },
+                { id: 90, commonName: "Mariposa Corazón", scientificName: "Parides sp.", category: "Mariposas", info: "Polinizadora de luz tenue. Asegura que las plantas del sotobosque, donde llega poca luz, también den semillas.", image: "1Brogiob5AS5RxznST-55g2zGnydPyFpj" },
+                { id: 87, commonName: "Mariposa Morfo", scientificName: "Morpho helenor", category: "Mariposas", info: "Destello azul. Su presencia es señal de un bosque maduro y rico en diversidad genética floral.", image: "1AN0oKbPtPqYHSblHe-loPEzvYB3bHA51" },
+                { id: 85, commonName: "Mariposa Junonia", scientificName: "Junonia evarete", category: "Mariposas", info: "Ocelos protectores. Sus 'ojos' en las alas nos hablan de la compleja red de defensa y supervivencia del bosque.", image: "1Pfy98683vgDMZmo3mytOb3hLivXAiG1Y" },
+                { id: 84, commonName: "Mariposa Heliconius", scientificName: "Heliconius sp.", category: "Mariposas", info: "Mensajera de polen. Fundamental para la reproducción de las enredaderas nativas que decoran nuestros muros.", image: "1xDA4hbrsf51vivHbHWqbVdTyTTjfuMiE" },
+                { id: 78, commonName: "Mariposa Organillo", scientificName: "Hamadryas sp.", category: "Mariposas", info: "Sonido en el vuelo. Nos enseña que incluso las mariposas tienen su propia voz para proteger la vida.", image: "1fE0BODPYwcBXh4djolkgx1v_N1Xbj1OF" },
+                { id: 73, commonName: "Mariposa Búho", scientificName: "Caligo telamonius", category: "Mariposas", info: "Guardián del atardecer. Sus grandes ojos imitan a los búhos, protegiendo a la micro-fauna de depredadores.", image: "1edvtItYvd8lAWoA_AgDooHHn9renSCSu" },
+                { id: 70, commonName: "Mariposa Pavo Real Blanca", scientificName: "Anartia jatrophae", category: "Mariposas", info: "Luz constante. Es una de nuestras polinizadoras más activas durante todo el año, sin importar la estación.", image: "18oIt2DULgucOkQltLDKMqQw5AoNtDT03" },
+                { id: 69, commonName: "Mariposa Tronadora", scientificName: "Hamadryas feronia", category: "Mariposas", info: "Arte en el tronco. Su mimetismo perfecto con la corteza demuestra la unión indisoluble entre el insecto y el árbol.", image: "1Zi3RX5Y4DV_wcSC_rpuT7W62z9VkoLwM" },
+                { id: 68, commonName: "Mariposa Anartia Roja", scientificName: "Anartia amathea", category: "Mariposas", info: "Pasión polinizadora. Su color vibrante guía a otras especies hacia las flores que necesitan ser fecundadas.", image: "1QNLXkYB-fqb_4t-sCkBMQqUO3QA7RBUo" },
+                { id: 67, commonName: "Mariposa Tigre", scientificName: "Lycorea halia", category: "Mariposas", info: "Fuerza polinizadora. Muy activa en los bordes de la propiedad, asegurando la conectividad de la vegetación.", image: "134EhOKGK2jvKvKXU3bkMfcH_WwU6-Z3b" },
+                { id: 65, commonName: "Mariposa 88", scientificName: "Diaethria clymena", category: "Mariposas", info: "Número de la naturaleza. Su belleza asombrosa nos indica la presencia de agua pura en las cercanías.", image: "10XfrMwEGJ2xEGjfXxcv4MBzk1Qba_-MJ" },
+                { id: 30, commonName: "Mariposa Malaquita", scientificName: "Siproeta stelenes", category: "Mariposas", info: "Joya esmeralda. Ayuda a descomponer jugos de frutas caídas, acelerando el ciclo de nutrientes en el suelo.", image: "1EXwtFxf8V2XgO8csJAQnyl6W74PX_YOp" },
+                { id: 29, commonName: "Mariposa Amarilla", scientificName: "Phoebis sennae", category: "Mariposas", info: "Relámpago de sol. Es una polinizadora incansable que mantiene viva la llama de nuestros jardines ecológicos.", image: "1ZI37v5J0HuWZ_detOWBB_e2o4xBY5TQ0" },
+
+                // ARÁCNIDOS
+                { id: 111, commonName: "Araña Cyclosa", scientificName: "Cyclosa sp.", category: "Arácnidos", info: "Maestra del engaño. Sus telas circulares protegen a nuestras plantas jóvenes de insectos devoradores.", image: "1EDZR4tgVslBmmLQjuPZ_3eAw3j44m0In" },
+                { id: 96, commonName: "Araña Tigre", scientificName: "Argiope argentata", category: "Arácnidos", info: "Arquitecta de seda plateada. Su presencia es señal de un jardín sano donde la red de la vida está completa.", image: "12rpb0nFna6vnuhQ0mTbZTd20PJ6pB_U7" },
+                { id: 97, commonName: "Araña Cabeza de Flecha", scientificName: "Micrathena sp.", category: "Arácnidos", info: "Geometría sagrada. Sus formas únicas controlan insectos voladores molestos, haciendo tu estancia confortable.", image: "19RpzkfgBIZV2Gx7ZnOJrIe_n2oce_EDe" }
             ];
 
             const categories = ["Todos", "Aves", "Primates", "Mamíferos", "Reptiles", "Anfibios", "Mariposas", "Arácnidos"];
@@ -224,204 +245,223 @@
             const filteredAnimals = useMemo(() => {
                 return animals.filter(a => {
                     const matchesCategory = filter === 'Todos' || a.category === filter;
-                    const matchesSearch = a.commonName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                         a.scientificName.toLowerCase().includes(searchTerm.toLowerCase());
-                    return matchesCategory && matchesSearch;
+                    const search = searchTerm.toLowerCase();
+                    return matchesCategory && (a.commonName.toLowerCase().includes(search) || a.scientificName.toLowerCase().includes(search));
                 });
             }, [filter, searchTerm]);
 
-            useEffect(() => {
-                document.body.style.overflow = (selectedAnimal || isReporting || isLegalOpen) ? 'hidden' : 'unset';
-            }, [selectedAnimal, isReporting, isLegalOpen]);
+            const addToMyList = (animal) => {
+                if (mySightings.find(s => s.id === animal.id)) return;
+                setMySightings(prev => [...prev, { 
+                    ...animal, 
+                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+                    date: new Date().toLocaleDateString() 
+                }]);
+            };
 
-            const handleSubmit = async (e) => {
+            const handleSubmitAll = (e) => {
                 e.preventDefault();
                 setStatus('sending');
-                setTimeout(() => {
-                    setStatus('success');
-                    setTimeout(() => { setIsReporting(null); setStatus('idle'); }, 2000);
+                setTimeout(() => { 
+                    setStatus('success'); 
+                    setTimeout(() => { 
+                        setView('explore'); 
+                        setStatus('idle'); 
+                        setMySightings([]); 
+                    }, 2500); 
                 }, 1500);
             };
 
             return (
-                <div className="min-h-screen flex flex-col bg-stone-50 overflow-x-hidden">
+                <div className="min-h-screen flex flex-col bg-stone-50 animate-fade-in">
+                    {/* Header */}
                     <header className="relative min-h-[180px] md:min-h-[260px] bg-lime-800 flex flex-col items-center justify-center text-white overflow-hidden px-4 py-8">
                         <div className="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?auto=format&fit=crop&q=80')] bg-cover bg-center"></div>
                         <div className="absolute inset-0 bg-gradient-to-b from-lime-900/60 to-lime-800"></div>
                         <div className="relative z-10 flex flex-col items-center w-full">
-                            <img src={logoUrl} alt="Logo El Limonar" className="h-12 md:h-16 w-auto max-w-[70%] object-contain mb-5" />
-                            <h1 className="text-xl md:text-3xl font-black uppercase tracking-tighter text-center leading-tight text-lime-50 px-2 max-w-2xl">
-                                SANTUARIO FLORA Y FAUNA
-                            </h1>
-                            <p className="text-lime-200 text-[10px] md:text-[14px] uppercase font-bold tracking-[0.2em] mt-3 text-center opacity-90">
-                                HUMEDAL & BOSQUE SECO TROPICAL
-                            </p>
-                            <div className="mt-4 px-3 py-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full">
-                                <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-lime-50">Guía de Biodiversidad</span>
-                            </div>
+                            <img src={logoUrl} alt="Logo" className="h-12 md:h-16 w-auto max-w-[70%] object-contain mb-5" />
+                            <h1 className="text-xl md:text-3xl font-black uppercase tracking-tighter text-center">SANTUARIO FLORA Y FAUNA</h1>
+                            <p className="text-lime-200 text-[10px] md:text-[14px] uppercase font-bold tracking-[0.2em] mt-3">HUMEDAL & BOSQUE SECO TROPICAL</p>
                         </div>
                     </header>
 
-                    <div className="sticky top-0 z-40 bg-white border-b border-stone-200 shadow-sm w-full">
+                    {/* Nav */}
+                    <nav className="sticky top-0 z-40 bg-white border-b border-stone-200 shadow-sm w-full">
                         <div className="max-w-7xl mx-auto flex">
-                            <button onClick={() => setView('explore')} className={`flex-1 py-3 text-[9px] font-black uppercase tracking-widest flex flex-col items-center gap-1 transition-all ${view === 'explore' ? 'text-lime-800 border-b-2 border-lime-800' : 'text-stone-400'}`}>
-                                <Icon name="search" /> Explorar
-                            </button>
-                            <button onClick={() => setView('map')} className={`flex-1 py-3 text-[9px] font-black uppercase tracking-widest flex flex-col items-center gap-1 transition-all ${view === 'map' ? 'text-lime-800 border-b-2 border-lime-800' : 'text-stone-400'}`}>
-                                <Icon name="map" /> Ver Mapa
+                            <button onClick={() => setView('explore')} className={`flex-1 py-4 text-[9px] font-black uppercase tracking-widest flex flex-col items-center gap-1 transition-all ${view === 'explore' ? 'text-lime-800 border-b-2 border-lime-800 bg-stone-50' : 'text-stone-400'}`}><Icon name="search" /> Explorar</button>
+                            <button onClick={() => setView('map')} className={`flex-1 py-4 text-[9px] font-black uppercase tracking-widest flex flex-col items-center gap-1 transition-all ${view === 'map' ? 'text-lime-800 border-b-2 border-lime-800 bg-stone-50' : 'text-stone-400'}`}><Icon name="map" /> Mapa Sendero</button>
+                            <button onClick={() => setView('my-list')} className={`flex-1 py-4 text-[9px] font-black uppercase tracking-widest flex flex-col items-center gap-1 relative ${view === 'my-list' ? 'text-lime-800 border-b-2 border-lime-800 bg-stone-50' : 'text-stone-400'}`}>
+                                <Icon name="list-checks" /> Mis Hallazgos
+                                {mySightings.length > 0 && <span className="absolute top-2 right-4 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">{mySightings.length}</span>}
                             </button>
                         </div>
-                        <div className="bg-stone-50/80 backdrop-blur-md p-3 border-b border-stone-100">
-                            <div className="max-w-7xl mx-auto flex flex-col gap-3">
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"><Icon name="search" className="w-4 h-4" /></span>
-                                    <input type="text" placeholder="¿A qué habitante buscas hoy?" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full bg-white border border-stone-200 rounded-lg py-2 pl-9 pr-4 text-[13px] outline-none focus:ring-1 focus:ring-lime-800/30 transition-all shadow-sm" />
-                                </div>
-                                <nav className="flex overflow-x-auto hide-scrollbar gap-2">
-                                    {categories.map(cat => (
-                                        <button key={cat} onClick={() => setFilter(cat)} 
-                                            className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight transition-all border shrink-0 ${filter === cat ? 'bg-lime-800 text-white border-lime-800 shadow-sm' : 'bg-white text-stone-400 border-stone-100 hover:bg-stone-50'}`}>
-                                            {cat}
-                                        </button>
-                                    ))}
-                                </nav>
-                            </div>
-                        </div>
-                    </div>
+                    </nav>
 
-                    <div className="view-enter flex-1 flex flex-col">
-                        {view === 'explore' ? (
-                            <div className="max-w-7xl mx-auto w-full px-2 md:px-4 mt-6">
-                                <main className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 mt-2 mb-20">
-                                    {filteredAnimals.map(animal => (
-                                        <div key={animal.id} className="animal-card bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-stone-100 group">
-                                            <div className="aspect-square relative overflow-hidden bg-stone-100">
-                                                <ImageWithFallback src={getImg(animal.image)} alt={animal.commonName} category={animal.category} className="w-full h-full group-hover:scale-110 transition-transform duration-700" />
-                                                <button onClick={() => setIsReporting(animal)} className="absolute top-2 right-2 bg-lime-800 text-white p-2 md:p-2.5 rounded-full shadow-lg active:scale-125 transition-transform z-10 backdrop-blur-sm">
-                                                    <Icon name="camera" className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-                                            <div className="p-3 md:p-4 flex-1 flex flex-col justify-between">
-                                                <div>
-                                                    <span className="text-[7px] font-black uppercase text-lime-800/60 tracking-widest">{animal.category}</span>
-                                                    <h3 className="text-[10px] font-black text-stone-800 truncate leading-tight uppercase tracking-tighter mb-1 mt-0.5">{animal.commonName}</h3>
-                                                </div>
-                                                <button onClick={() => setSelectedAnimal(animal)} className="w-full mt-2 md:mt-3 py-1.5 md:py-2 text-[8px] font-black uppercase tracking-widest bg-stone-50 text-stone-500 rounded-lg border border-stone-100 hover:bg-lime-800 hover:text-white transition-all">Ver Relato</button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </main>
-                            </div>
-                        ) : (
-                            <div className="flex-1 flex flex-col p-2 md:p-4 max-w-7xl mx-auto w-full">
-                                <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-stone-200 mb-4 text-center">
-                                    <h2 className="text-sm md:text-xl font-black text-lime-900 uppercase tracking-tighter leading-tight">
-                                        MAPA RECORRIDO SENDERO ECOLÓGICO EL LIMONAR
-                                    </h2>
-                                    <div className="flex items-center justify-center gap-4 md:gap-8 mt-3 text-[9px] md:text-xs font-bold text-stone-500 uppercase tracking-widest">
-                                        <div className="flex items-center gap-2">
-                                            <Icon name="clock" className="w-3 h-3 md:w-4 md:h-4 text-lime-700" />
-                                            <span>45 - 60 Minutos</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Icon name="map-pin" className="w-3 h-3 md:w-4 md:h-4 text-lime-700" />
-                                            <span>1 Km de Recorrido</span>
-                                        </div>
+                    <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 mb-20 view-enter">
+                        {view === 'explore' && (
+                            <div className="space-y-6">
+                                <div className="flex flex-col gap-4">
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400"><Icon name="search" /></div>
+                                        <input type="text" placeholder="¿Qué encontraste hoy?..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-2xl border border-stone-200 text-sm shadow-sm outline-none focus:ring-2 focus:ring-lime-800/20 bg-white" />
+                                    </div>
+                                    <div className="flex overflow-x-auto gap-2 hide-scrollbar pb-2">
+                                        {categories.map(cat => <button key={cat} onClick={() => setFilter(cat)} className={`whitespace-nowrap px-4 py-2 rounded-full text-[10px] font-black uppercase transition-all border shrink-0 ${filter === cat ? 'bg-lime-800 text-white border-lime-800 shadow-md' : 'bg-white text-stone-400 border-stone-100 hover:bg-stone-50'}`}>{cat}</button>)}
                                     </div>
                                 </div>
-                                <div className="bg-white p-1 rounded-2xl shadow-xl border border-stone-200 overflow-hidden flex flex-col" style={{ minHeight: '500px', height: '65vh' }}>
-                                    <iframe 
-                                        src={mapUrl} 
-                                        className="flex-1 w-full border-none rounded-xl" 
-                                        title="Mapa El Limonar" 
-                                        allow="autoplay"
-                                        loading="lazy"
-                                    />
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
+                                    {filteredAnimals.map(a => (
+                                        <div key={a.id} className="animal-card bg-white rounded-2xl overflow-hidden border border-stone-100 shadow-sm flex flex-col group relative">
+                                            <div className="absolute top-2 right-2 z-10">
+                                                <button onClick={(e) => { e.stopPropagation(); addToMyList(a); }} className="bg-lime-800 text-white p-2 rounded-full shadow-lg active:scale-125 transition-transform"><Icon name="camera" className="w-3.5 h-3.5" /></button>
+                                            </div>
+                                            <ImageWithFallback src={getImg(a.image)} alt={a.commonName} className="aspect-square" />
+                                            <div className="p-3 flex-1 flex flex-col justify-between">
+                                                <div>
+                                                    <span className="text-[7px] font-black uppercase text-lime-800/60 tracking-widest">{a.category}</span>
+                                                    <h3 className="text-[10px] font-black text-stone-800 truncate uppercase mt-0.5 tracking-tighter leading-tight">{a.commonName}</h3>
+                                                </div>
+                                                <button onClick={() => setSelectedAnimal(a)} className="w-full mt-3 py-2 bg-stone-50 text-stone-400 text-[8px] font-black uppercase rounded-lg border border-stone-100 hover:bg-lime-50 hover:text-lime-800 transition-colors">Ver Relato</button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
-                    </div>
 
-                    {/* Modales y Detalle Animal */}
-                    {isLegalOpen && (
-                        <div className="fixed inset-0 z-[120] flex items-end md:items-center justify-center bg-black/80 backdrop-blur-md px-4" onClick={() => setIsLegalOpen(false)}>
-                            <div className="bg-white w-full max-w-lg rounded-t-[2rem] md:rounded-[2rem] overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300" onClick={e => e.stopPropagation()}>
-                                <div className="p-6 md:p-10">
-                                    <div className="flex justify-between items-center mb-8">
-                                        <h2 className="text-xl md:text-2xl font-black text-lime-950 uppercase tracking-tighter">Información Legal</h2>
-                                        <button onClick={() => setIsLegalOpen(false)} className="bg-stone-100 p-2 rounded-full text-stone-500 hover:bg-stone-200 transition-colors">
-                                            <Icon name="x" className="w-5 h-5" />
-                                        </button>
+                        {view === 'map' && (
+                            <div className="max-w-4xl mx-auto space-y-6">
+                                <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-200 text-center">
+                                    <h2 className="text-sm md:text-xl font-black text-lime-900 uppercase mb-4">MAPA SENDERO ECOLÓGICO</h2>
+                                    <div className="flex justify-center gap-8 md:gap-12 text-[10px] md:text-xs font-bold text-stone-500 uppercase tracking-widest">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="p-3 bg-lime-100 rounded-full text-lime-800"><Icon name="clock" className="w-5 h-5" /></div>
+                                            <span>45 - 60 MIN</span>
+                                        </div>
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="p-3 bg-lime-100 rounded-full text-lime-800"><Icon name="navigation" className="w-5 h-5" /></div>
+                                            <span>1.2 KILÓMETROS</span>
+                                        </div>
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="p-3 bg-lime-100 rounded-full text-lime-800"><Icon name="mountain" className="w-5 h-5" /></div>
+                                            <span>NIVEL FÁCIL</span>
+                                        </div>
                                     </div>
-                                    <div className="space-y-8 overflow-y-auto max-h-[60vh] pr-2 hide-scrollbar text-justify text-stone-600">
-                                        <p className="text-[13px] md:text-[14px] leading-relaxed">
-                                            El contenido de este portal, incluyendo su diseño y las fotografías de la <strong>Bitácora de biodiversidad</strong>, son propiedad exclusiva de sus autores y de <strong>Eco Hotel El Limonar</strong>.
-                                        </p>
-                                    </div>
-                                    <button onClick={() => setIsLegalOpen(false)} className="w-full mt-8 py-4 bg-stone-900 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg">Entendido</button>
                                 </div>
+                                <div className="bg-white p-2 rounded-3xl shadow-xl border border-stone-200 overflow-hidden relative group">
+                                    <ImageWithFallback src={getImg(mapImgId)} alt="Mapa del Sendero El Limonar" className="w-full rounded-2xl" zoomable={true} />
+                                    <div className="absolute top-6 left-6 bg-lime-800 text-white text-[8px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                                        Pulsa para ampliar mapa
+                                    </div>
+                                </div>
+                                <p className="text-center text-stone-400 text-[10px] font-medium italic">Sigue los marcadores físicos durante tu recorrido real en el santuario.</p>
                             </div>
-                        </div>
-                    )}
+                        )}
 
+                        {view === 'my-list' && (
+                            <div className="max-w-3xl mx-auto space-y-8 pb-12">
+                                <h2 className="text-2xl font-black text-lime-950 uppercase tracking-tighter">REPORTE DEL EXPLORADOR</h2>
+                                {mySightings.length === 0 ? (
+                                    <div className="bg-white p-12 rounded-[2.5rem] border border-stone-100 text-center flex flex-col items-center gap-4 shadow-sm">
+                                        <div className="text-stone-200"><Icon name="camera" className="w-12 h-12" /></div>
+                                        <p className="text-xs font-bold text-stone-300 uppercase tracking-widest">No has registrado hallazgos todavía.<br/>Presiona la cámara en las fotos de las especies.</p>
+                                    </div>
+                                ) : (
+                                    <form onSubmit={handleSubmitAll} className="space-y-6">
+                                        <div className="bg-white rounded-[2rem] border border-stone-100 divide-y shadow-sm overflow-hidden">
+                                            {mySightings.map(s => (
+                                                <div key={s.id} className="p-4 md:p-6 flex flex-col md:flex-row md:items-center gap-4">
+                                                    <div className="flex items-center gap-4 flex-1">
+                                                        <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 shadow-sm"><ImageWithFallback src={getImg(s.image)} alt={s.commonName} className="w-full h-full" /></div>
+                                                        <div className="flex-1">
+                                                            <p className="text-xs font-black uppercase text-stone-800 leading-tight">{s.commonName}</p>
+                                                            <p className="text-[9px] text-stone-400 font-bold uppercase mt-1">{s.date} • {s.timestamp}</p>
+                                                        </div>
+                                                    </div>
+                                                    <select required className="md:w-56 bg-stone-50 text-[10px] p-3 rounded-xl border border-stone-100 outline-none font-bold text-stone-600 appearance-none">
+                                                        <option value="" disabled selected>Estación de avistamiento</option>
+                                                        {STATIONS.map(st => <option key={st} value={st}>{st}</option>)}
+                                                    </select>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="bg-white p-8 rounded-[2rem] border border-stone-200 shadow-xl space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <input required type="text" placeholder="Nombre completo" className="w-full p-4 bg-stone-50 rounded-xl text-xs font-bold border border-stone-100 outline-none" />
+                                                <input required type="email" placeholder="Correo electrónico" className="w-full p-4 bg-stone-50 rounded-xl text-xs font-bold border border-stone-100 outline-none" />
+                                                <select required className="w-full md:col-span-2 p-4 bg-stone-50 rounded-xl text-xs font-bold border border-stone-100 outline-none appearance-none"><option value="" disabled selected>Selecciona tu Cabaña</option>{CABINS.map(c => <option key={c} value={c}>{c}</option>)}</select>
+                                            </div>
+                                            <button disabled={status !== 'idle'} type="submit" className="w-full py-5 bg-lime-800 text-white font-black uppercase tracking-[0.25em] text-[11px] rounded-2xl shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                                                {status === 'sending' ? 'Sincronizando...' : (status === 'success' ? '¡Reporte Enviado!' : 'Enviar mi bitácora')}
+                                                <Icon name="send" className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Modal Detalle */}
                     {selectedAnimal && (
-                        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/90 backdrop-blur-md px-4" onClick={() => setSelectedAnimal(null)}>
-                            <div className="bg-white w-full max-w-xl rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
-                                <div className="h-64 md:h-80 relative bg-stone-200">
-                                    <ImageWithFallback src={getImg(selectedAnimal.image)} alt={selectedAnimal.commonName} category={selectedAnimal.category} className="w-full h-full" />
-                                    <button onClick={() => setSelectedAnimal(null)} className="absolute top-4 md:top-6 right-4 md:right-6 bg-black/40 p-2 md:p-3 rounded-full text-white backdrop-blur-md hover:bg-black/60 transition-colors"><Icon name="x" /></button>
-                                    <div className="absolute bottom-0 left-0 w-full p-6 md:p-10 bg-gradient-to-t from-black via-black/40 to-transparent">
-                                        <h2 className="text-2xl md:text-3xl font-black text-white leading-none uppercase tracking-tighter">{selectedAnimal.commonName}</h2>
-                                        <p className="text-[10px] md:text-xs italic text-stone-200 mt-2 font-medium tracking-wide">{selectedAnimal.scientificName}</p>
+                        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setSelectedAnimal(null)}>
+                            <div className="bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl animate-fade-in" onClick={e => e.stopPropagation()}>
+                                <div className="h-64 md:h-80 relative">
+                                    <ImageWithFallback src={getImg(selectedAnimal.image)} alt={selectedAnimal.commonName} className="w-full h-full" />
+                                    <button onClick={() => setSelectedAnimal(null)} className="absolute top-4 right-4 bg-black/40 p-3 rounded-full text-white backdrop-blur-md"><Icon name="x" className="w-5 h-5" /></button>
+                                    <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black/40 to-transparent">
+                                        <h2 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{selectedAnimal.commonName}</h2>
+                                        <p className="text-[10px] italic text-stone-200 mt-2 font-medium tracking-wide uppercase">{selectedAnimal.scientificName}</p>
                                     </div>
                                 </div>
-                                <div className="p-6 md:p-10 bg-white">
-                                    <p className="text-xs md:text-[15px] text-stone-700 leading-relaxed italic text-justify font-medium">"{selectedAnimal.info}"</p>
-                                    <button onClick={() => { setSelectedAnimal(null); setIsReporting(selectedAnimal); }} className="w-full mt-6 py-4 md:py-5 bg-lime-800 text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center gap-3">
-                                        <Icon name="camera" className="w-4 h-4" /> ¡Lo estoy observando ahora!
-                                    </button>
+                                <div className="p-8">
+                                    <p className="text-sm text-stone-700 leading-relaxed italic text-justify font-medium">"{selectedAnimal.info}"</p>
+                                    <button onClick={() => { addToMyList(selectedAnimal); setSelectedAnimal(null); }} className="w-full mt-8 py-5 bg-lime-800 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-transform"><Icon name="plus" className="w-5 h-5" /> Añadir a mi reporte</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Footer Rediseñado: Bitácora arriba, identidad central ampliada */}
+                    {/* Legales */}
+                    {isLegalOpen && (
+                        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setIsLegalOpen(false)}>
+                            <div className="bg-stone-50 w-full max-w-2xl max-h-[90vh] rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl animate-fade-in" onClick={e => e.stopPropagation()}>
+                                <div className="p-6 md:p-8 border-b border-stone-200 flex justify-between items-center bg-white shrink-0">
+                                    <h2 className="text-xl font-black text-lime-950 uppercase tracking-tighter">Información Legal</h2>
+                                    <button onClick={() => setIsLegalOpen(false)} className="bg-stone-100 p-2.5 rounded-full text-stone-500 hover:bg-stone-200 transition-colors"><Icon name="x" className="w-5 h-5" /></button>
+                                </div>
+                                <div className="p-8 md:p-12 overflow-y-auto space-y-8 custom-scrollbar text-stone-600 text-[13px] leading-relaxed text-justify">
+                                    <section className="space-y-3">
+                                        <div className="flex items-center gap-2 text-lime-800"><Icon name="shield-check" className="w-5 h-5" /><h3 className="font-black uppercase tracking-widest text-[11px]">Propiedad Intelectual</h3></div>
+                                        <p>El diseño, interfaz y fotografías son propiedad exclusiva de <strong>Eco Hotel El Limonar</strong>. Queda prohibida la reproducción parcial o total, distribución o uso comercial sin autorización previa.</p>
+                                    </section>
+
+                                    <section className="space-y-3">
+                                        <div className="flex items-center gap-2 text-lime-800"><Icon name="scale" className="w-5 h-5" /><h3 className="font-black uppercase tracking-widest text-[11px]">Responsabilidad y Uso Indebido</h3></div>
+                                        <p>Eco Hotel El Limonar no se hace responsable por el uso indebido de la información aquí contenida. Se considera **uso indebido** cualquier acción que desvíe el propósito educativo (como el uso comercial no autorizado de las fotos o la falsificación malintencionada de reportes).</p>
+                                        <p className="bg-stone-100 p-4 rounded-xl italic text-stone-500">Esta bitácora es una **guía informativa**. Al ser un entorno natural, la ubicación de las especies es dinámica. El hotel no asume responsabilidad por la seguridad del usuario si este ignora las normas de distancia y respeto hacia la fauna silvestre.</p>
+                                    </section>
+                                </div>
+                                <div className="p-6 md:p-8 bg-white border-t border-stone-100 shrink-0 text-center">
+                                    <button onClick={() => setIsLegalOpen(false)} className="w-full py-5 bg-stone-900 text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.25em] active:scale-95">Entendido y Aceptar</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <footer className="py-12 md:py-20 px-6 text-center text-lime-100 mt-auto bg-lime-800">
                         <div className="max-w-4xl mx-auto space-y-10">
-                            
-                            {/* Renglón 1: Bitácora (Sube una posición) */}
-                            <div className="flex items-center justify-center gap-4 opacity-40">
-                                <div className="h-[0.5px] w-12 bg-lime-200"></div>
-                                <p className="text-[10px] md:text-[12px] font-black uppercase tracking-[0.5em]">BITÁCORA DE 105 ESPECIES</p>
-                                <div className="h-[0.5px] w-12 bg-lime-200"></div>
-                            </div>
-
-                            {/* Renglón 2: Bloque Central Ampliado */}
                             <div className="space-y-5">
-                                <div className="flex items-center justify-center gap-3 text-[14px] md:text-[22px] font-black uppercase tracking-tight text-white">
-                                    <img src={faviconUrl} alt="Favicon" className="h-5 md:h-8 w-auto" />
+                                <div className="flex items-center justify-center gap-3 text-[14px] md:text-[22px] font-black uppercase text-white">
+                                    <img src={faviconUrl} alt="Icon" className="h-5 md:h-8 w-auto" />
                                     <p>ECOHOTEL EL LIMONAR, SUCRE, COLOMBIA</p>
                                 </div>
-                                <p className="italic font-light tracking-[0.1em] text-[16px] md:text-[26px] font-serif text-lime-50/90 leading-none">
-                                    "13 años cultivando hospitalidad consciente"
-                                </p>
+                                <p className="italic font-light text-[16px] md:text-[26px] font-serif text-lime-50/90 leading-none">"13 años cultivando hospitalidad consciente"</p>
                             </div>
-                            
-                            {/* Renglón 3: Derechos y Legales (Baja una posición con icono de registro) */}
-                            <div className="flex flex-col items-center gap-3 pt-8 border-t border-white/10 opacity-60">
-                                <div className="flex items-center gap-2 text-[9px] md:text-[11px] font-black uppercase tracking-[0.2em]">
-                                    <Icon name="copyright" className="w-3 h-3 md:w-4 md:h-4" />
-                                    <span>2026 TODOS LOS DERECHOS RESERVADOS</span>
-                                </div>
-                                <button 
-                                    onClick={() => setIsLegalOpen(true)}
-                                    className="text-white hover:text-white/80 underline underline-offset-8 transition-colors cursor-pointer font-black text-[9px] md:text-[11px] uppercase tracking-widest"
-                                >
-                                    Legales
-                                </button>
+                            <div className="flex flex-col items-center gap-3 pt-8 border-t border-white/10 opacity-60 text-[9px] md:text-[11px] uppercase tracking-widest">
+                                <p>© 2026 TODOS LOS DERECHOS RESERVADOS</p>
+                                <button onClick={() => setIsLegalOpen(true)} className="text-white underline underline-offset-8">Legales</button>
                             </div>
-
                         </div>
                     </footer>
                 </div>
