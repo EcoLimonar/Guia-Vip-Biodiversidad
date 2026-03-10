@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SANTUARIO FLORA Y FAUNA - El Limonar (105 Especies)</title>
-    <!-- Scripts de React, Babel y Tailwind -->
+    <!-- Scripts de React y Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -42,11 +42,6 @@
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-
-        .serif-italic-title { 
-            font-family: 'Playfair Display', serif; 
-            font-style: italic;
-        }
     </style>
 </head>
 <body class="text-stone-900">
@@ -55,11 +50,19 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useCallback } = React;
 
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz1pkTsKdfv1GO9EV9yWwGMx5j4JWohxFPfmnHdJb8uTCc5xiCkWFcQ1txeA7YfHD7w/exec";
+        // URL DE TU GOOGLE APPS SCRIPT INTEGRADA
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwRQFHz5LBUA8-2OyMda8-K-jLrQo04YnCTOZmXBlDm80UzDdbeTavNHsCgQyYFto6Rxg/exec";
 
         const Icon = ({ name, className = "w-4 h-4" }) => {
             useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
+                const initIcons = () => {
+                    if (window.lucide) {
+                        window.lucide.createIcons();
+                    } else {
+                        setTimeout(initIcons, 100);
+                    }
+                };
+                initIcons();
             }, [name]);
             return <i data-lucide={name} className={className}></i>;
         };
@@ -89,6 +92,11 @@
                             <span className="text-[7px] font-bold uppercase tracking-widest opacity-40 italic text-center">Imagen no disponible</span>
                         </div>
                     )}
+                    {zoomable && !isZoomed && (
+                        <div className="absolute bottom-4 right-4 bg-white/80 p-2 rounded-full shadow-lg text-stone-500">
+                            <Icon name="maximize-2" className="w-4 h-4" />
+                        </div>
+                    )}
                 </div>
             );
         };
@@ -102,7 +110,11 @@
             const [status, setStatus] = useState('idle');
             const [mySightings, setMySightings] = useState([]);
             
-            const [formData, setFormData] = useState({ nombre: '', email: '', cabana: '' });
+            const [formData, setFormData] = useState({
+                nombre: '',
+                email: '',
+                cabana: ''
+            });
 
             const getImg = useCallback((id) => {
                 if(!id) return "";
@@ -116,7 +128,6 @@
             const CABINS = ["Mandarina", "Limón", "Toronja", "Naranja", "Limonar Ecohotel", "Pomelo", "Casa El Limonar"];
             const STATIONS = ["Huerta y aula agroecográfica", "Laguna de los abuelos", "Sendero de la ceiba tolua", "La estación del amor", "Estación caracolí", "Estación papagayo", "Ecohotel el limonar"];
 
-            // --- BASE DE DATOS COMPLETA: 105 ESPECIES REGISTRADAS ---
             const animals = [
                 // PRIMATES (3)
                 { id: 1, commonName: "Mono Aullador Rojo", scientificName: "Alouatta seniculus", category: "Primates", info: "Ingeniero del bosque. Sus hábitos de alimentación promueven el crecimiento de nuevas ramas y la entrada de luz solar a las zonas bajas.", image: "1ZA0JsTaJUnbOplOdBqQKizEmGin1xMpH" },
@@ -268,17 +279,20 @@
                     alert("Por favor, selecciona una estación para cada avistamiento.");
                     return;
                 }
+
                 setStatus('sending');
+
                 const payload = {
                     name: formData.nombre,
                     email: formData.email,
-                    cabin: formData.cabana,
+                    cabin: formData.cabana, // Mantiene la consistencia del objeto JSON con la clave 'cabin'
                     sightings: mySightings.map(s => ({
                         name: s.commonName,
                         place: s.station,
                         time: `${s.date} ${s.timestamp}`
                     }))
                 };
+
                 try {
                     await fetch(WEB_APP_URL, {
                         method: 'POST',
@@ -286,6 +300,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
+
                     setStatus('success'); 
                     setTimeout(() => { 
                         setView('explore'); 
@@ -294,13 +309,15 @@
                         setFormData({ nombre: '', email: '', cabana: '' });
                     }, 3000);
                 } catch (error) {
+                    console.error("Error al enviar:", error);
                     setStatus('idle');
-                    alert("Error de conexión. Intenta de nuevo.");
+                    alert("Hubo un problema al conectar con el sistema. Por favor intenta de nuevo.");
                 }
             };
 
             return (
                 <div className="min-h-screen flex flex-col bg-stone-50 animate-fade-in">
+                    {/* Header Original */}
                     <header className="relative min-h-[180px] md:min-h-[260px] bg-lime-800 flex flex-col items-center justify-center text-white overflow-hidden px-4 py-8">
                         <div className="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?auto=format&fit=crop&q=80')] bg-cover bg-center"></div>
                         <div className="absolute inset-0 bg-gradient-to-b from-lime-900/60 to-lime-800"></div>
@@ -311,6 +328,7 @@
                         </div>
                     </header>
 
+                    {/* Navegación Original */}
                     <nav className="sticky top-0 z-40 bg-white border-b border-stone-200 shadow-sm w-full">
                         <div className="max-w-7xl mx-auto flex">
                             <button onClick={() => setView('explore')} className={`flex-1 py-4 text-[9px] font-black uppercase tracking-widest flex flex-col items-center gap-1 transition-all ${view === 'explore' ? 'text-lime-800 border-b-2 border-lime-800 bg-stone-50' : 'text-stone-400'}`}><Icon name="search" /> Explorar</button>
@@ -333,26 +351,7 @@
                                     <div className="flex overflow-x-auto gap-2 hide-scrollbar pb-2">
                                         {categories.map(cat => <button key={cat} onClick={() => setFilter(cat)} className={`whitespace-nowrap px-4 py-2 rounded-full text-[10px] font-black uppercase transition-all border shrink-0 ${filter === cat ? 'bg-lime-800 text-white border-lime-800 shadow-md' : 'bg-white text-stone-400 border-stone-100 hover:bg-stone-50'}`}>{cat}</button>)}
                                     </div>
-
-                                    {/* BLOQUE PROTOCOLO 3C */}
-                                    <div className="w-full bg-white border border-stone-200 rounded-[2.5rem] p-8 md:p-10 shadow-sm relative overflow-hidden mt-4">
-                                        <div className="flex flex-col md:flex-row items-start justify-between gap-8">
-                                            <div className="text-left flex-1">
-                                                <h3 className="serif-italic-title text-lg md:text-2xl text-lime-900 font-bold mb-4 tracking-tight leading-tight uppercase">Ciencia, Conservación & Contemplación</h3>
-                                                <p className="text-xs md:text-sm text-stone-600 leading-relaxed italic font-medium max-w-xl">Tus registros nutren nuestro estudio (Ciencia), protegen la vida (Conservación) y honran la belleza en silencio (Contemplación).</p>
-                                            </div>
-                                            <div className="shrink-0 flex flex-col items-center gap-6">
-                                                <h2 className="text-xl md:text-2xl font-black text-lime-900 uppercase tracking-tighter text-center">PROTOCOLO 3C</h2>
-                                                <div className="flex gap-8 opacity-50">
-                                                    <div className="flex flex-col items-center gap-1"><div className="p-3 bg-lime-50 rounded-full text-lime-800"><Icon name="microscope" /></div><span className="text-[8px] font-black uppercase">Ciencia</span></div>
-                                                    <div className="flex flex-col items-center gap-1"><div className="p-3 bg-lime-50 rounded-full text-lime-800"><Icon name="shield-check" /></div><span className="text-[8px] font-black uppercase">Conserva</span></div>
-                                                    <div className="flex flex-col items-center gap-1"><div className="p-3 bg-lime-50 rounded-full text-lime-800"><Icon name="eye" /></div><span className="text-[8px] font-black uppercase">Contempla</span></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest text-right mr-1">BITÁCORA BIODIVERSIDAD {filteredAnimals.length} ESPECIES</div>
+                                    <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">BITÁCORA BIODIVERSIDAD {filteredAnimals.length} ESPECIES</div>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
                                     {filteredAnimals.map(a => (
@@ -375,17 +374,29 @@
                         )}
 
                         {view === 'map' && (
-                            <div className="max-w-4xl mx-auto space-y-6 text-center">
-                                <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-200">
-                                    <h2 className="text-xl font-black text-lime-900 uppercase mb-4">MAPA SENDERO ECOLÓGICO</h2>
-                                    <div className="flex justify-center gap-12 text-xs font-bold text-stone-500 uppercase tracking-widest">
-                                        <div className="flex flex-col items-center gap-2"><div className="p-3 bg-lime-100 rounded-full text-lime-800"><Icon name="clock" className="w-5 h-5" /></div><span>45-60 MIN</span></div>
-                                        <div className="flex flex-col items-center gap-2"><div className="p-3 bg-lime-100 rounded-full text-lime-800"><Icon name="navigation" className="w-5 h-5" /></div><span>1.2 KM</span></div>
-                                        <div className="flex flex-col items-center gap-2"><div className="p-3 bg-lime-100 rounded-full text-lime-800"><Icon name="mountain" className="w-5 h-5" /></div><span>NIVEL FÁCIL</span></div>
+                            <div className="max-w-4xl mx-auto space-y-6">
+                                <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-200 text-center">
+                                    <h2 className="text-sm md:text-xl font-black text-lime-900 uppercase mb-4">MAPA SENDERO ECOLÓGICO</h2>
+                                    <div className="flex justify-center gap-8 md:gap-12 text-[10px] md:text-xs font-bold text-stone-500 uppercase tracking-widest">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="p-3 bg-lime-100 rounded-full text-lime-800"><Icon name="clock" className="w-5 h-5" /></div>
+                                            <span>45 - 60 MIN</span>
+                                        </div>
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="p-3 bg-lime-100 rounded-full text-lime-800"><Icon name="navigation" className="w-5 h-5" /></div>
+                                            <span>1.2 KILÓMETROS</span>
+                                        </div>
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="p-3 bg-lime-100 rounded-full text-lime-800"><Icon name="mountain" className="w-5 h-5" /></div>
+                                            <span>NIVEL FÁCIL</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="bg-white p-2 rounded-3xl shadow-xl border border-stone-200 overflow-hidden relative">
-                                    <ImageWithFallback src={getImg(mapImgId)} alt="Mapa" className="w-full rounded-2xl" zoomable={true} />
+                                <div className="bg-white p-2 rounded-3xl shadow-xl border border-stone-200 overflow-hidden relative group">
+                                    <ImageWithFallback src={getImg(mapImgId)} alt="Mapa del Sendero El Limonar" className="w-full rounded-2xl" zoomable={true} />
+                                    <div className="absolute top-6 left-6 bg-lime-800 text-white text-[8px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                                        Pulsa para ampliar mapa
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -396,7 +407,7 @@
                                 {mySightings.length === 0 ? (
                                     <div className="bg-white p-12 rounded-[2.5rem] border border-stone-100 text-center flex flex-col items-center gap-4 shadow-sm">
                                         <div className="text-stone-200"><Icon name="camera" className="w-12 h-12" /></div>
-                                        <p className="text-xs font-bold text-stone-300 uppercase tracking-widest">No has registrado hallazgos todavía.</p>
+                                        <p className="text-xs font-bold text-stone-300 uppercase tracking-widest">No has registrado hallazgos todavía.<br/>Presiona la cámara en las fotos de las especies.</p>
                                     </div>
                                 ) : (
                                     <form onSubmit={handleSubmitAll} className="space-y-6">
@@ -407,12 +418,17 @@
                                                         <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 shadow-sm">
                                                             <ImageWithFallback src={getImg(s.image)} alt={s.commonName} className="w-full h-full" />
                                                         </div>
-                                                        <div className="flex-1 text-left">
+                                                        <div className="flex-1">
                                                             <p className="text-xs font-black uppercase text-stone-800 leading-tight">{s.commonName}</p>
                                                             <p className="text-[9px] text-stone-400 font-bold uppercase mt-1">{s.date} • {s.timestamp}</p>
                                                         </div>
                                                     </div>
-                                                    <select required value={s.station} onChange={(e) => updateSightingStation(s.id, e.target.value)} className="md:w-56 bg-stone-50 text-[10px] p-3 rounded-xl border border-stone-100 font-bold text-stone-600 appearance-none">
+                                                    <select 
+                                                        required 
+                                                        value={s.station}
+                                                        onChange={(e) => updateSightingStation(s.id, e.target.value)}
+                                                        className="md:w-56 bg-stone-50 text-[10px] p-3 rounded-xl border border-stone-100 outline-none font-bold text-stone-600 appearance-none"
+                                                    >
                                                         <option value="" disabled>Estación de avistamiento</option>
                                                         {STATIONS.map(st => <option key={st} value={st}>{st}</option>)}
                                                     </select>
@@ -439,15 +455,15 @@
                         )}
                     </main>
 
-                    {/* Modal Detalle */}
+                    {/* Modal Detalle Original */}
                     {selectedAnimal && (
                         <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setSelectedAnimal(null)}>
                             <div className="bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl animate-fade-in" onClick={e => e.stopPropagation()}>
                                 <div className="h-64 md:h-80 relative">
                                     <ImageWithFallback src={getImg(selectedAnimal.image)} alt={selectedAnimal.commonName} className="w-full h-full" />
                                     <button onClick={() => setSelectedAnimal(null)} className="absolute top-4 right-4 bg-black/40 p-3 rounded-full text-white backdrop-blur-md"><Icon name="x" className="w-5 h-5" /></button>
-                                    <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black/40 to-transparent text-white text-left">
-                                        <h2 className="text-2xl font-black uppercase tracking-tighter leading-none">{selectedAnimal.commonName}</h2>
+                                    <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black/40 to-transparent">
+                                        <h2 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{selectedAnimal.commonName}</h2>
                                         <p className="text-[10px] italic text-stone-200 mt-2 font-medium tracking-wide uppercase">{selectedAnimal.scientificName}</p>
                                     </div>
                                 </div>
@@ -459,6 +475,7 @@
                         </div>
                     )}
 
+                    {/* Footer Original */}
                     <footer className="py-12 md:py-20 px-6 text-center text-lime-100 mt-auto bg-lime-800">
                         <div className="max-w-4xl mx-auto space-y-10">
                             <div className="space-y-5">
@@ -475,7 +492,7 @@
                         </div>
                     </footer>
 
-                    {/* VENTANA EMERGENTE DE LEGALES */}
+                    {/* Ventana Emergente de Legales (Contenido Exacto) */}
                     {isLegalOpen && (
                         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setIsLegalOpen(false)}>
                             <div className="bg-stone-50 w-full max-w-2xl max-h-[90vh] rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl animate-fade-in" onClick={e => e.stopPropagation()}>
@@ -484,21 +501,22 @@
                                     <button onClick={() => setIsLegalOpen(false)} className="bg-stone-100 p-2.5 rounded-full text-stone-500 hover:bg-stone-200 transition-colors"><Icon name="x" className="w-5 h-5" /></button>
                                 </div>
                                 <div className="p-8 md:p-12 overflow-y-auto space-y-8 custom-scrollbar text-stone-600 text-[13px] leading-relaxed text-justify">
-                                    <section className="space-y-3 text-left">
+                                    <section className="space-y-3">
                                         <div className="flex items-center gap-2 text-lime-800">
                                             <Icon name="shield-check" className="w-5 h-5" />
                                             <h3 className="font-black uppercase tracking-widest text-[11px]">Propiedad Intelectual</h3>
                                         </div>
                                         <p>El diseño, interfaz y fotografías son propiedad exclusiva de <strong>Eco Hotel El Limonar</strong>. Queda prohibida la reproducción parcial o total, distribución o uso comercial sin autorización previa.</p>
                                     </section>
-                                    <section className="space-y-4 text-left">
+
+                                    <section className="space-y-4">
                                         <div className="flex items-center gap-2 text-lime-800">
                                             <Icon name="scale" className="w-5 h-5" />
                                             <h3 className="font-black uppercase tracking-widest text-[11px]">Responsabilidad y Uso Indebido</h3>
                                         </div>
                                         <p>Eco Hotel El Limonar no se hace responsable por el uso indebido de la información aquí contenida. Se considera <strong>uso indebido</strong> cualquier acción que desvíe el propósito educativo (como el uso comercial no autorizado de las fotos o la falsificación malintencionada de reportes).</p>
                                         <div className="bg-stone-100 p-6 rounded-2xl italic text-stone-500 border-l-4 border-lime-800">
-                                            <p>Esta bitácora es una <strong>guía informativa</strong>. Al ser un entorno natural, la ubicación de las especies es dinámica. El hotel no asume responsabilidad por la seguridad del usuario si este ignora las normas de distancia y respeto hacia la fauna silvestre, e incluye el compromiso inquebrantable de actuar bajo el <strong>Protocolo 3C (Ciencia, Conservación y Contemplación)</strong>.</p>
+                                            <p>Esta bitácora es una <strong>guía informativa</strong>. Al ser un entorno natural, la ubicación de las especies es dinámica. El hotel no asume responsabilidad por la seguridad del usuario si este ignora las normas de distancia y respeto hacia la fauna silvestre.</p>
                                         </div>
                                     </section>
                                 </div>
