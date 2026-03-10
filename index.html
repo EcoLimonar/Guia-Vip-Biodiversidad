@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SANTUARIO FLORA Y FAUNA - El Limonar</title>
+    <title>SANTUARIO FLORA Y FAUNA - El Limonar (105 Especies)</title>
     <!-- Scripts de React y Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide JS (Versión estable para navegador) -->
+    <!-- Lucide JS -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
@@ -50,7 +50,9 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useCallback } = React;
 
-        // Componente de icono con re-intento de carga para evitar errores de ReferenceError
+        // URL DE TU GOOGLE APPS SCRIPT
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxK3RDhq7aPtXRupHj34lijt36Qf04ZxjG_5Hvx3z2ex47ZX5kzIIANuzpgA4Lwzov4zA/exec";
+
         const Icon = ({ name, className = "w-4 h-4" }) => {
             useEffect(() => {
                 const initIcons = () => {
@@ -107,6 +109,12 @@
             const [isLegalOpen, setIsLegalOpen] = useState(false);
             const [status, setStatus] = useState('idle');
             const [mySightings, setMySightings] = useState([]);
+            
+            const [formData, setFormData] = useState({
+                nombre: '',
+                email: '',
+                cabana: ''
+            });
 
             const getImg = useCallback((id) => {
                 if(!id) return "";
@@ -120,18 +128,19 @@
             const CABINS = ["Mandarina", "Limón", "Toronja", "Naranja", "Limonar Ecohotel", "Pomelo", "Casa El Limonar"];
             const STATIONS = ["Huerta y aula agroecógica", "Laguna de los abuelos", "Sendero de la ceiba tolua", "La estación del amor", "Estación caracolí", "Estación papagayo", "Ecohotel el limonar"];
 
-            // BASE DE DATOS COMPLETA DE 105 ESPECIES
             const animals = [
-                // PRIMATES Y MAMÍFEROS
-                { id: 44, commonName: "Loro Real (Rosita)", scientificName: "Amazona ochrocephala", category: "Aves", info: "Rosita es la anfitriona de El Limonar. Su especie ayuda a dispersar semillas de palmas nativas, regenerando la cobertura vegetal que nos da sombra.", image: "1DHzFmNrPyujZU3y6D2H8v1qSTJC8Z6dz" },
-                { id: 2, commonName: "Mono Marteja", scientificName: "Aotus lemurinus", category: "Primates", info: "Un centinela nocturno. Controla poblaciones de insectos y es un dispersor clave de semillas de árboles que solo fructifican en la noche.", image: "1qoyIz0TLmrEo935n0VkqpLMpj2F-zcvs" },
+                // PRIMATES (3)
                 { id: 1, commonName: "Mono Aullador Rojo", scientificName: "Alouatta seniculus", category: "Primates", info: "Ingeniero del bosque. Sus hábitos de alimentación promueven el crecimiento de nuevas ramas y la entrada de luz solar a las zonas bajas.", image: "1ZA0JsTaJUnbOplOdBqQKizEmGin1xMpH" },
+                { id: 2, commonName: "Mono Marteja", scientificName: "Aotus lemurinus", category: "Primates", info: "Un centinela nocturno. Controla poblaciones de insectos y es un dispersor clave de semillas de árboles que solo fructifican en la noche.", image: "1qoyIz0TLmrEo935n0VkqpLMpj2F-zcvs" },
                 { id: 76, commonName: "Tití Cabeciblanco", scientificName: "Saguinus oedipus", category: "Primates", info: "Joyas del Caribe. Protegemos su hábitat porque son los reforestadores más activos, dispersando semillas de árboles que otros animales no consumen.", image: "1U73t7OpQozKkqkelvVrZRIvVMsTmOmKv" },
+                
+                // MAMÍFEROS (3)
                 { id: 86, commonName: "Oso Perezoso", scientificName: "Bradypus variegatus", category: "Mamíferos", info: "Un ecosistema andante. Su ritmo pausado permite la vida de micro-organismos en su pelaje, demostrando la paz y salud de nuestro entorno.", image: "1_emC_qGq0hU6fq5dIGouTLS5hjcFM_Bt" },
                 { id: 21, commonName: "Ardilla de Cola Roja", scientificName: "Sciurus granatensis", category: "Mamíferos", info: "Jardinera incansable. Al enterrar nueces y semillas que luego olvida, siembra involuntariamente cientos de árboles nativos cada año.", image: "1cyQq43aizGJPcQ8s_KT6lP40nhbfGyPK" },
                 { id: 20, commonName: "Oso Hormiguero", scientificName: "Tamandua tetradactyla", category: "Mamíferos", info: "Controlador de insectos xilófagos. Mantiene sanos los troncos de nuestros árboles centenarios al regular las poblaciones de termitas.", image: "10ZDVYkH3mNZx_FIoCWTFEEH5YtiXWVFZ" },
-                
-                // AVES
+
+                // AVES (66)
+                { id: 44, commonName: "Loro Real (Rosita)", scientificName: "Amazona ochrocephala", category: "Aves", info: "Rosita es la anfitriona de El Limonar. Su especie ayuda a dispersar semillas de palmas nativas, regenerando la cobertura vegetal que nos da sombra.", image: "1DHzFmNrPyujZU3y6D2H8v1qSTJC8Z6dz" },
                 { id: 4, commonName: "Guacamaya Bandera", scientificName: "Ara macao", category: "Aves", info: "Embajadora del color. Su presencia indica que nuestros bosques están bien conectados regionalmente, permitiendo el flujo de vida.", image: "18Am6EdZcpS7rluz1ce0mq1qupCCUxU9q" },
                 { id: 3, commonName: "Tucán Pico Iris", scientificName: "Ramphastos sulfuratus", category: "Aves", info: "Arquitecto del dosel. Dispersa semillas grandes que forman la estructura principal de la selva tropical de El Limonar.", image: "1BmEOSSQ-GsXMAJYcZlmYZLmBA4cBp3uT" },
                 { id: 5, commonName: "Loro Cabeciazul", scientificName: "Pionus menstruus", category: "Aves", info: "Centinela social. Sus llamados alertan a otras especies sobre depredadores, manteniendo una red de seguridad compartida en el bosque.", image: "1g9k43mkqOIk1p1ZTE1aRhJxOM4yLd6Cb" },
@@ -198,7 +207,7 @@
                 { id: 124, commonName: "Urraca Pechiblanca", scientificName: "Cyanocorax affinis", category: "Aves", info: "Inteligencia pura. Son dispersoras de semillas de granos grandes y mantienen una organización social admirable.", image: "1dk1DOk16qWiaUQKUM5teLvacsUm1HQtI" },
                 { id: 125, commonName: "Mosquero Vientre Azufrado", scientificName: "Myiodynastes luteiventris", category: "Aves", info: "Visitante estacional. Ayuda a controlar la población de saltamontes durante los meses de mayor crecimiento.", image: "1-KnO6mEMDbpogl8bBF9de5kvujwvj7ib" },
 
-                // REPTILES
+                // REPTILES (9)
                 { id: 25, commonName: "Tortuga Morrocoy", scientificName: "Chelonoidis carbonarius", category: "Reptiles", info: "Sabia sembradora de pasos lentos. Es vital para dispersar plantas que solo crecen en el suelo fértil de El Limonar.", image: "1UuGunzSRgT_zWhv4IHB7127Xsq91EKeW" },
                 { id: 95, commonName: "Lagartija Coliazul", scientificName: "Holcosus festivus", category: "Reptiles", info: "Cazadora de luz. Controla los insectos de la superficie, facilitando que el abono natural del bosque se transforme.", image: "1l6XOxdBGh-X_tyZN2VinRsP1bwhsWMXA" },
                 { id: 89, commonName: "Geco Cabeza Amarilla", scientificName: "Gonatodes albogularis", category: "Reptiles", info: "Aliado del descanso. Se alimenta de mosquitos en las cabañas, ofreciendo un control de plagas natural y silencioso.", image: "1gLo-_fOaiyaPN2ZZ6TdW99jFBNzJ0quH" },
@@ -209,7 +218,7 @@
                 { id: 23, commonName: "Lagarto Overo", scientificName: "Tupinambis teguixin", category: "Reptiles", info: "Explorador todoterreno. Ayuda a controlar desde pequeños roedores hasta insectos, pieza clave del bosque seco.", image: "1nZLlu7X8JR6cmzVt89Z5H4ySHoDsFc4F" },
                 { id: 22, commonName: "Iguana Verde", scientificName: "Iguana iguana", category: "Reptiles", info: "Guardiana del sol. Como gran herbívora, ayuda a podar naturalmente la vegetación de las orillas del agua.", image: "1Q8E7PFNt8FQkuqlXHp_Jr8YnymLdiBK4" },
 
-                // ANFIBIOS
+                // ANFIBIOS (6)
                 { id: 27, commonName: "Rana de Cristal", scientificName: "Nymphargus griffithsi", category: "Anfibios", info: "Piel de salud. Su presencia es la garantía máxima de que nuestras aguas son cristalinas y libres de contaminantes.", image: "1OYrdh2RnWE2X5wGhYZhr1YX9CYP0gP1X" },
                 { id: 110, commonName: "Sapo Arlequín", scientificName: "Atelopus sp.", category: "Anfibios", info: "Joyas del arroyo. Indican la pureza del aire y el agua en los rincones más profundos y protegidos de El Limonar.", image: "1MtAtx-mfFjE7wWivrb6nXYmncVW1qWkz" },
                 { id: 109, commonName: "Sapito Punteado Bicolor", scientificName: "Phyllomedusa bicolor", category: "Anfibios", info: "Resonancia húmeda. Su piel ayuda a que el ambiente mantenga una humedad óptima necesaria para las plantas.", image: "1cLDTW_cDRdGU9G8-8tYATkc46Gd5Wa_r" },
@@ -217,7 +226,7 @@
                 { id: 93, commonName: "Rana Platanera", scientificName: "Boana xerophylla", category: "Anfibios", info: "Cantora de las lluvias. Su actividad indica que los ciclos naturales del agua en el hotel fluyen correctamente.", image: "1-TDCaJH_KlHAahs7Mw6QPxzODpGdnYq0" },
                 { id: 66, commonName: "Ranita de Lluvia", scientificName: "Pristimantis sp.", category: "Anfibios", info: "Vida sin renacuajos. Al nacer directamente como ranitas, demuestran la asombrosa adaptación de la vida al Caribe.", image: "1xl8BMkCegm_FwDX702XGl5CtAPDXAsXH" },
 
-                // MARIPOSAS
+                // MARIPOSAS (15)
                 { id: 28, commonName: "Mariposa Monarca", scientificName: "Danaus plexippus", category: "Mariposas", info: "Viajera incansable. Une a El Limonar con el resto del continente polinizando y sembrando vida.", image: "1dQQiwctr_DZkEAZ0wWhYm44cqGrJ2HUv" },
                 { id: 107, commonName: "Mariposa de Hojarasca", scientificName: "Archaeoprepona demophon", category: "Mariposas", info: "Maestra del disfraz. Nos enseña el valor de la mimetización y el respeto por el espacio de cada ser vivo.", image: "1uplLqdMR6IN1WeMKIq3L68pp8SoRf4p5" },
                 { id: 90, commonName: "Mariposa Corazón", scientificName: "Parides sp.", category: "Mariposas", info: "Polinizadora de luz tenue. Asegura que las plantas del sotobosque, donde llega poca luz, también den semillas.", image: "1Brogiob5AS5RxznST-55g2zGnydPyFpj" },
@@ -234,7 +243,7 @@
                 { id: 30, commonName: "Mariposa Malaquita", scientificName: "Siproeta stelenes", category: "Mariposas", info: "Joya esmeralda. Ayuda a descomponer jugos de frutas caídas, acelerando el ciclo de nutrientes en el suelo.", image: "1EXwtFxf8V2XgO8csJAQnyl6W74PX_YOp" },
                 { id: 29, commonName: "Mariposa Amarilla", scientificName: "Phoebis sennae", category: "Mariposas", info: "Relámpago de sol. Es una polinizadora incansable que mantiene viva la llama de nuestros jardines ecológicos.", image: "1ZI37v5J0HuWZ_detOWBB_e2o4xBY5TQ0" },
 
-                // ARÁCNIDOS
+                // ARÁCNIDOS (3)
                 { id: 111, commonName: "Araña Cyclosa", scientificName: "Cyclosa sp.", category: "Arácnidos", info: "Maestra del engaño. Sus telas circulares protegen a nuestras plantas jóvenes de insectos devoradores.", image: "1EDZR4tgVslBmmLQjuPZ_3eAw3j44m0In" },
                 { id: 96, commonName: "Araña Tigre", scientificName: "Argiope argentata", category: "Arácnidos", info: "Arquitecta de seda plateada. Su presencia es señal de un jardín sano donde la red de la vida está completa.", image: "12rpb0nFna6vnuhQ0mTbZTd20PJ6pB_U7" },
                 { id: 97, commonName: "Araña Cabeza de Flecha", scientificName: "Micrathena sp.", category: "Arácnidos", info: "Geometría sagrada. Sus formas únicas controlan insectos voladores molestos, haciendo tu estancia confortable.", image: "19RpzkfgBIZV2Gx7ZnOJrIe_n2oce_EDe" }
@@ -255,21 +264,55 @@
                 setMySightings(prev => [...prev, { 
                     ...animal, 
                     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
-                    date: new Date().toLocaleDateString() 
+                    date: new Date().toLocaleDateString(),
+                    station: '' 
                 }]);
             };
 
-            const handleSubmitAll = (e) => {
+            const updateSightingStation = (id, station) => {
+                setMySightings(prev => prev.map(s => s.id === id ? { ...s, station } : s));
+            };
+
+            const handleSubmitAll = async (e) => {
                 e.preventDefault();
+                if (mySightings.some(s => !s.station)) {
+                    alert("Por favor, selecciona una estación para cada avistamiento.");
+                    return;
+                }
+
                 setStatus('sending');
-                setTimeout(() => { 
+
+                const payload = {
+                    name: formData.nombre,
+                    email: formData.email,
+                    cabin: formData.cabana,
+                    sightings: mySightings.map(s => ({
+                        name: s.commonName,
+                        place: s.station,
+                        time: `${s.date} ${s.timestamp}`
+                    }))
+                };
+
+                try {
+                    await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors', 
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
                     setStatus('success'); 
                     setTimeout(() => { 
                         setView('explore'); 
                         setStatus('idle'); 
                         setMySightings([]); 
-                    }, 2500); 
-                }, 1500);
+                        setFormData({ nombre: '', email: '', cabana: '' });
+                    }, 3000);
+                } catch (error) {
+                    console.error("Error al enviar:", error);
+                    setStatus('idle');
+                    alert("Hubo un problema al conectar con el sistema. Por favor intenta de nuevo.");
+                }
             };
 
             return (
@@ -303,11 +346,13 @@
                                 <div className="flex flex-col gap-4">
                                     <div className="relative">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400"><Icon name="search" /></div>
-                                        <input type="text" placeholder="¿Qué encontraste hoy?..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-2xl border border-stone-200 text-sm shadow-sm outline-none focus:ring-2 focus:ring-lime-800/20 bg-white" />
+                                        <input type="text" placeholder="¿Qué encontraste hoy? (Ej: Rosita, Tití, Mariposa...)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-2xl border border-stone-200 text-sm shadow-sm outline-none focus:ring-2 focus:ring-lime-800/20 bg-white" />
                                     </div>
                                     <div className="flex overflow-x-auto gap-2 hide-scrollbar pb-2">
                                         {categories.map(cat => <button key={cat} onClick={() => setFilter(cat)} className={`whitespace-nowrap px-4 py-2 rounded-full text-[10px] font-black uppercase transition-all border shrink-0 ${filter === cat ? 'bg-lime-800 text-white border-lime-800 shadow-md' : 'bg-white text-stone-400 border-stone-100 hover:bg-stone-50'}`}>{cat}</button>)}
                                     </div>
+                                    {/* CAMBIO SOLICITADO: "GUÍA" por "BITÁCORA" */}
+                                    <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">BITÁCORA BIODIVERSIDAD {filteredAnimals.length} ESPECIES</div>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
                                     {filteredAnimals.map(a => (
@@ -354,7 +399,6 @@
                                         Pulsa para ampliar mapa
                                     </div>
                                 </div>
-                                <p className="text-center text-stone-400 text-[10px] font-medium italic">Sigue los marcadores físicos durante tu recorrido real en el santuario.</p>
                             </div>
                         )}
 
@@ -372,14 +416,21 @@
                                             {mySightings.map(s => (
                                                 <div key={s.id} className="p-4 md:p-6 flex flex-col md:flex-row md:items-center gap-4">
                                                     <div className="flex items-center gap-4 flex-1">
-                                                        <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 shadow-sm"><ImageWithFallback src={getImg(s.image)} alt={s.commonName} className="w-full h-full" /></div>
+                                                        <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 shadow-sm">
+                                                            <ImageWithFallback src={getImg(s.image)} alt={s.commonName} className="w-full h-full" />
+                                                        </div>
                                                         <div className="flex-1">
                                                             <p className="text-xs font-black uppercase text-stone-800 leading-tight">{s.commonName}</p>
                                                             <p className="text-[9px] text-stone-400 font-bold uppercase mt-1">{s.date} • {s.timestamp}</p>
                                                         </div>
                                                     </div>
-                                                    <select required className="md:w-56 bg-stone-50 text-[10px] p-3 rounded-xl border border-stone-100 outline-none font-bold text-stone-600 appearance-none">
-                                                        <option value="" disabled selected>Estación de avistamiento</option>
+                                                    <select 
+                                                        required 
+                                                        value={s.station}
+                                                        onChange={(e) => updateSightingStation(s.id, e.target.value)}
+                                                        className="md:w-56 bg-stone-50 text-[10px] p-3 rounded-xl border border-stone-100 outline-none font-bold text-stone-600 appearance-none"
+                                                    >
+                                                        <option value="" disabled>Estación de avistamiento</option>
                                                         {STATIONS.map(st => <option key={st} value={st}>{st}</option>)}
                                                     </select>
                                                 </div>
@@ -387,13 +438,16 @@
                                         </div>
                                         <div className="bg-white p-8 rounded-[2rem] border border-stone-200 shadow-xl space-y-6">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <input required type="text" placeholder="Nombre completo" className="w-full p-4 bg-stone-50 rounded-xl text-xs font-bold border border-stone-100 outline-none" />
-                                                <input required type="email" placeholder="Correo electrónico" className="w-full p-4 bg-stone-50 rounded-xl text-xs font-bold border border-stone-100 outline-none" />
-                                                <select required className="w-full md:col-span-2 p-4 bg-stone-50 rounded-xl text-xs font-bold border border-stone-100 outline-none appearance-none"><option value="" disabled selected>Selecciona tu Cabaña</option>{CABINS.map(c => <option key={c} value={c}>{c}</option>)}</select>
+                                                <input required type="text" placeholder="Nombre completo" value={formData.nombre} onChange={(e) => setFormData({...formData, nombre: e.target.value})} className="w-full p-4 bg-stone-50 rounded-xl text-xs font-bold border border-stone-100 outline-none" />
+                                                <input required type="email" placeholder="Correo electrónico" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full p-4 bg-stone-50 rounded-xl text-xs font-bold border border-stone-100 outline-none" />
+                                                <select required value={formData.cabana} onChange={(e) => setFormData({...formData, cabana: e.target.value})} className="w-full md:col-span-2 p-4 bg-stone-50 rounded-xl text-xs font-bold border border-stone-100 outline-none appearance-none">
+                                                    <option value="" disabled>Selecciona tu Cabaña</option>
+                                                    {CABINS.map(c => <option key={c} value={c}>{c}</option>)}
+                                                </select>
                                             </div>
-                                            <button disabled={status !== 'idle'} type="submit" className="w-full py-5 bg-lime-800 text-white font-black uppercase tracking-[0.25em] text-[11px] rounded-2xl shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                                            <button disabled={status !== 'idle'} type="submit" className={`w-full py-5 text-white font-black uppercase tracking-[0.25em] text-[11px] rounded-2xl shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all ${status === 'success' ? 'bg-green-600' : 'bg-lime-800'}`}>
                                                 {status === 'sending' ? 'Sincronizando...' : (status === 'success' ? '¡Reporte Enviado!' : 'Enviar mi bitácora')}
-                                                <Icon name="send" className="w-4 h-4" />
+                                                <Icon name={status === 'success' ? 'check' : 'send'} className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </form>
@@ -422,33 +476,6 @@
                         </div>
                     )}
 
-                    {/* Legales */}
-                    {isLegalOpen && (
-                        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setIsLegalOpen(false)}>
-                            <div className="bg-stone-50 w-full max-w-2xl max-h-[90vh] rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl animate-fade-in" onClick={e => e.stopPropagation()}>
-                                <div className="p-6 md:p-8 border-b border-stone-200 flex justify-between items-center bg-white shrink-0">
-                                    <h2 className="text-xl font-black text-lime-950 uppercase tracking-tighter">Información Legal</h2>
-                                    <button onClick={() => setIsLegalOpen(false)} className="bg-stone-100 p-2.5 rounded-full text-stone-500 hover:bg-stone-200 transition-colors"><Icon name="x" className="w-5 h-5" /></button>
-                                </div>
-                                <div className="p-8 md:p-12 overflow-y-auto space-y-8 custom-scrollbar text-stone-600 text-[13px] leading-relaxed text-justify">
-                                    <section className="space-y-3">
-                                        <div className="flex items-center gap-2 text-lime-800"><Icon name="shield-check" className="w-5 h-5" /><h3 className="font-black uppercase tracking-widest text-[11px]">Propiedad Intelectual</h3></div>
-                                        <p>El diseño, interfaz y fotografías son propiedad exclusiva de <strong>Eco Hotel El Limonar</strong>. Queda prohibida la reproducción parcial o total, distribución o uso comercial sin autorización previa.</p>
-                                    </section>
-
-                                    <section className="space-y-3">
-                                        <div className="flex items-center gap-2 text-lime-800"><Icon name="scale" className="w-5 h-5" /><h3 className="font-black uppercase tracking-widest text-[11px]">Responsabilidad y Uso Indebido</h3></div>
-                                        <p>Eco Hotel El Limonar no se hace responsable por el uso indebido de la información aquí contenida. Se considera **uso indebido** cualquier acción que desvíe el propósito educativo (como el uso comercial no autorizado de las fotos o la falsificación malintencionada de reportes).</p>
-                                        <p className="bg-stone-100 p-4 rounded-xl italic text-stone-500">Esta bitácora es una **guía informativa**. Al ser un entorno natural, la ubicación de las especies es dinámica. El hotel no asume responsabilidad por la seguridad del usuario si este ignora las normas de distancia y respeto hacia la fauna silvestre.</p>
-                                    </section>
-                                </div>
-                                <div className="p-6 md:p-8 bg-white border-t border-stone-100 shrink-0 text-center">
-                                    <button onClick={() => setIsLegalOpen(false)} className="w-full py-5 bg-stone-900 text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.25em] active:scale-95">Entendido y Aceptar</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
                     <footer className="py-12 md:py-20 px-6 text-center text-lime-100 mt-auto bg-lime-800">
                         <div className="max-w-4xl mx-auto space-y-10">
                             <div className="space-y-5">
@@ -464,6 +491,40 @@
                             </div>
                         </div>
                     </footer>
+
+                    {isLegalOpen && (
+                        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setIsLegalOpen(false)}>
+                            <div className="bg-stone-50 w-full max-w-2xl max-h-[90vh] rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl animate-fade-in" onClick={e => e.stopPropagation()}>
+                                <div className="p-6 md:p-8 border-b border-stone-200 flex justify-between items-center bg-white shrink-0">
+                                    <h2 className="text-xl font-black text-lime-950 uppercase tracking-tighter">Información Legal</h2>
+                                    <button onClick={() => setIsLegalOpen(false)} className="bg-stone-100 p-2.5 rounded-full text-stone-500 hover:bg-stone-200 transition-colors"><Icon name="x" className="w-5 h-5" /></button>
+                                </div>
+                                <div className="p-8 md:p-12 overflow-y-auto space-y-8 custom-scrollbar text-stone-600 text-[13px] leading-relaxed text-justify">
+                                    <section className="space-y-3">
+                                        <div className="flex items-center gap-2 text-lime-800">
+                                            <Icon name="shield-check" className="w-5 h-5" />
+                                            <h3 className="font-black uppercase tracking-widest text-[11px]">Propiedad Intelectual</h3>
+                                        </div>
+                                        <p>El diseño, interfaz y fotografías son propiedad exclusiva de <strong>Eco Hotel El Limonar</strong>. Queda prohibida la reproducción parcial o total, distribución o uso comercial sin autorización previa.</p>
+                                    </section>
+
+                                    <section className="space-y-4">
+                                        <div className="flex items-center gap-2 text-lime-800">
+                                            <Icon name="scale" className="w-5 h-5" />
+                                            <h3 className="font-black uppercase tracking-widest text-[11px]">Responsabilidad y Uso Indebido</h3>
+                                        </div>
+                                        <p>Eco Hotel El Limonar no se hace responsable por el uso indebido de la información aquí contenida. Se considera <strong>uso indebido</strong> cualquier acción que desvíe el propósito educativo (como el uso comercial no autorizado de las fotos o la falsificación malintencionada de reportes).</p>
+                                        <div className="bg-stone-100 p-6 rounded-2xl italic text-stone-500 border-l-4 border-lime-800">
+                                            <p>Esta bitácora es una <strong>guía informativa</strong>. Al ser un entorno natural, la ubicación de las especies es dinámica. El hotel no asume responsabilidad por la seguridad del usuario si este ignora las normas de distancia y respeto hacia la fauna silvestre.</p>
+                                        </div>
+                                    </section>
+                                </div>
+                                <div className="p-6 md:p-8 bg-white border-t border-stone-100 shrink-0 text-center">
+                                    <button onClick={() => setIsLegalOpen(false)} className="w-full py-5 bg-stone-900 text-white rounded-2xl font-black uppercase text-[11px] tracking-[0.25em] active:scale-95 transition-transform">Entiendo y Acepto</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         };
@@ -473,3 +534,6 @@
     </script>
 </body>
 </html>
+
+     
+             
