@@ -285,7 +285,7 @@
                 const payload = {
                     name: formData.nombre,
                     email: formData.email,
-                    cabin: formData.cabin, // Nota: El backend espera 'cabin'
+                    cabin: formData.cabana, // Mantiene la consistencia del objeto JSON con la clave 'cabin'
                     sightings: mySightings.map(s => ({
                         name: s.commonName,
                         place: s.station,
